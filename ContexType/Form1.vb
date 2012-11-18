@@ -152,8 +152,7 @@ Public Class Form1
     ' ----- Text Scanning/Handling -----
 
     ' Old data
-    Dim WordsOld As New List(Of String)
-    Dim CountOld As New List(Of Integer)
+    Dim RecsOld As New List(Of Recommendation)
 
     ' Text strings
     Dim WordTextPrev, WordTextTest As String
@@ -845,20 +844,20 @@ Public Class Form1
     Public Sub RescanDocument()
 
         ' Reset lists
-        WordsOld.Clear()
-        CountOld.Clear()
+        RecsOld.Clear()
+
 
         ' Trigger rescan
         WordTextPrev = ""
 
     End Sub
 
-    Private Sub cbxToLower_CheckedChanged(sender As System.Object, e As System.EventArgs)
+    Private Sub cbxToLower_CheckedChanged(ByVal sender As System.Object, ByVal e As System.EventArgs)
         RescanDocument()
     End Sub
 
     ' Rescan document
-    Private Sub btnRescan_Click(sender As System.Object, e As System.EventArgs) Handles RescanCurrentDocumentToolStripMenuItem.Click
+    Private Sub btnRescan_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles RescanCurrentDocumentToolStripMenuItem.Click
         RescanDocument()
     End Sub
 #End Region
@@ -866,7 +865,7 @@ Public Class Form1
 #Region "Reference controls"
 
     ' Add reference button
-    Private Sub btn_AddRef_Click(sender As System.Object, e As System.EventArgs) Handles btn_AddRef.Click
+    Private Sub btn_AddRef_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles btn_AddRef.Click
 
         ' Display dialog
         fileopener.ShowDialog()
@@ -886,7 +885,7 @@ Public Class Form1
     End Sub
 
     ' Remove reference(s) button
-    Private Sub btn_RemoveRef_Click(sender As System.Object, e As System.EventArgs) Handles btn_RemoveRef.Click
+    Private Sub btn_RemoveRef_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles btn_RemoveRef.Click
 
         If lbox_files.SelectedIndices.Count > 0 Then
 
@@ -968,7 +967,7 @@ Public Class Form1
     End Sub
 
     ' Update reference(s) button (removes them, then adds them back)
-    Private Sub btnUpdateRef_Click(sender As System.Object, e As System.EventArgs) Handles btn_UpdateRef.Click
+    Private Sub btnUpdateRef_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles btn_UpdateRef.Click
 
         If lbox_files.SelectedIndices.Count > 0 Then
 
@@ -1222,14 +1221,14 @@ Public Class Form1
                    Replace(":", " ").Replace(";", " ").Replace(",", "").Replace(ControlChars.Tab, " ")
 
         ' Word/count arrays
-        Dim FileWords As New List(Of String)
-        Dim FileCounts As New List(Of Integer)
+        Dim FileRecs As New List(Of Recommendation)
 
         ' Get word/count data
-        StringManipulation.GetWordData(FileText, FileCounts, FileWords, New Integer, True)
+        StringManipulation.GetWordData(FileText, FileRecs, New Integer, True)
 
         ' Get Trie data
-        Dim ReferenceTrie As NamedCountedList = Trie.CreateTrie(FileWords, FileCounts, Form1.TrieDepth)
+        FileRecs.Sort(New RecSortString)
+        Dim ReferenceTrie As NamedCountedList = Trie.CreateTrie(FileRecs, Form1.TrieDepth)
         ReferenceTrie.Name = FilePath
         Form1.ReferenceTries.Add(ReferenceTrie)
 
@@ -1268,8 +1267,7 @@ Public Class Form1
     End Sub
 
     ' Variables used in document scanning process
-    Public WordsNew As New List(Of String)
-    Public CountNew As New List(Of Integer)
+    Public RecsNew As New List(Of Recommendation)
 
     '   Main document trie sorting variables
     Public TextWorkerFreeze As Boolean = False
@@ -1281,7 +1279,7 @@ Public Class Form1
     Public MainDocCumulativeIdxList As New List(Of List(Of Integer))
 
     ' Analyzes documents and gets recommendation list
-    Public Sub TextWorker_DoWork(sender As System.Object, e As System.ComponentModel.DoWorkEventArgs) Handles TextWorker.DoWork
+    Public Sub TextWorker_DoWork(ByVal sender As System.Object, ByVal e As System.ComponentModel.DoWorkEventArgs) Handles TextWorker.DoWork
 
         ' This block contains the instructions for the TextWorker BackgroundWorker object
         ' This object continuously monitors the text of the active document and updates the list of active words
@@ -1374,17 +1372,13 @@ Public Class Form1
                 Dim WordTextPrevCopy As String = WordTextPrev
 
                 ' Get new data
-                WordsNew = New List(Of String)
-                CountNew = New List(Of Integer)
+                RecsNew = New List(Of Recommendation)
                 Dim TotalWordsNew, TotalWordsOld As Integer
 
-                Dim WordListNoCounting As String() = StringManipulation.GetWordData(WordTextCopy, CountNew, WordsNew, TotalWordsNew, False, False)
+                Dim WordListNoCounting As String() = StringManipulation.GetWordData(WordTextCopy, RecsNew, TotalWordsNew, False, False)
 
                 ' Exception handler - If new data is nil, continue while
-                If WordsNew.Count = 0 Then
-                    Continue While
-                End If
-                If (WordsNew.Count = 1 And String.IsNullOrEmpty(WordsNew.Item(0))) Then
+                If RecsNew.Count = 0 OrElse (RecsNew.Count = 1 AndAlso String.IsNullOrEmpty(RecsNew.Item(0).Text)) Then
                     Continue While
                 End If
 
@@ -1410,11 +1404,8 @@ Public Class Form1
 
                     ' Update data
                     TotalWordsOld = TotalWordsNew
-                    WordsOld.Clear()
-                    CountOld.Clear()
 
-                    WordsOld.AddRange(WordsNew)
-                    CountOld.AddRange(CountNew)
+                    RecsOld.AddRange(RecsNew)
 
                     Continue While
 
@@ -1432,32 +1423,31 @@ Public Class Form1
                 End If
 
                 ' Remove first null word from WordsNew (if applicable)
-                If WordsNew.Item(0) = "" Then
-                    WordsNew.RemoveAt(0)
-                    CountNew.RemoveAt(0)
+                If RecsNew.Item(0).Text.Length = 0 Then
+                    RecsNew.RemoveAt(0)
                 End If
 
                 ' Find changes (add new words)
                 Try
 
                     Dim ListOffset As Integer = 0 ' Amount the new list has been offset compared to the old
-                    For i = 0 To WordsNew.Count - 1
+                    For i = 0 To RecsNew.Count - 1
 
                         ' Get current word
-                        Dim ArrWord As String = WordsNew.Item(i)
+                        Dim ArrWord As String = RecsNew.Item(i).Text
 
                         ' Get corresponding index in "old" lists
                         Dim IndexPartner As Integer = -1
 
                         ' Check to see if the word hasn't moved much between the old and new lists
                         '   This avoids conducting lengthy searches of WordsOld for words that haven't moved/moved slightly
-                        If WordsOld.Count <> 0 Then
+                        If RecsOld.Count <> 0 Then
 
                             ' Conduct preliminary search with the offset that worked last time
                             '   This prevents having to scan multiple items if the offset hasn't changed
                             Dim ILO As Integer = i + ListOffset
-                            If ILO < 0 And ILO > WordsOld.Count - 1 Then
-                                If WordsOld.Item(ILO) = ArrWord Then
+                            If ILO < 0 And ILO > RecsOld.Count - 1 Then
+                                If RecsOld.Item(ILO).Text = ArrWord Then
                                     IndexPartner = ILO
                                 End If
                             End If
@@ -1467,11 +1457,11 @@ Public Class Form1
 
                                 ' Exception handler
                                 ILO = i + j
-                                If ILO < 0 Or ILO > WordsOld.Count - 1 Then
+                                If ILO < 0 Or ILO > RecsOld.Count - 1 Then
                                     Continue For
                                 End If
 
-                                If WordsOld.Item(ILO) = ArrWord Then
+                                If RecsOld.Item(ILO).Text = ArrWord Then
                                     ListOffset = j
                                     IndexPartner = ILO
                                     Exit For
@@ -1481,7 +1471,11 @@ Public Class Form1
 
                             ' If the word isn't close by, search for it exhaustively
                             If IndexPartner = -1 Then
-                                IndexPartner = WordsOld.IndexOf(ArrWord)
+                                For j = 0 To RecsOld.Count - 1
+                                    If RecsOld.Item(i).Text = ArrWord Then
+                                        IndexPartner = j
+                                    End If
+                                Next
                             End If
 
                         End If
@@ -1491,11 +1485,11 @@ Public Class Form1
                         If IndexPartner = -1 Then
                             ArrCountOther = 0   ' Word isn't known to other (old) list
                         Else
-                            ArrCountOther = CountOld.Item(IndexPartner)
+                            ArrCountOther = RecsOld.Item(IndexPartner).Number
                         End If
 
                         ' Deduct as many of ArrCountOther as can fit from the current count
-                        Dim ArrCountDelta As Integer = CountNew.Item(i) - ArrCountOther ' --> THIS IS THE CHANGE IN TOTAL COUNT
+                        Dim ArrCountDelta As Integer = RecsNew.Item(i).Number - ArrCountOther ' --> THIS IS THE CHANGE IN TOTAL COUNT
 
                         If ArrCountDelta = 1 And WordTextPrev.Length <> 0 Then
                             WordCurrent = ArrWord ' If the current ArrWord is the one last changed, mark it as the current word
@@ -1517,11 +1511,9 @@ Public Class Form1
 
                                 ' Update data
                                 TotalWordsOld = TotalWordsNew
-                                WordsOld.Clear()
-                                CountOld.Clear()
+                                RecsOld.Clear()
 
-                                WordsOld.AddRange(WordsNew)
-                                CountOld.AddRange(CountNew)
+                                RecsOld.AddRange(RecsNew)
 
                                 Continue While
 
@@ -1560,8 +1552,8 @@ Public Class Form1
 
                     TotalWordsOld = TotalWordsNew
 
-                    WordsOld.AddRange(WordsNew)
-                    CountOld.AddRange(CountNew)
+                    RecsOld.AddRange(RecsNew)
+
 
                     Continue While
 
@@ -1578,11 +1570,11 @@ Public Class Form1
 
                     ' Update data
                     TotalWordsOld = TotalWordsNew
-                    WordsOld.Clear()
-                    CountOld.Clear()
+                    RecsOld.Clear()
 
-                    WordsOld.AddRange(WordsNew)
-                    CountOld.AddRange(CountNew)
+
+                    RecsOld.AddRange(RecsNew)
+
 
                     Continue While
                 End If
@@ -1593,20 +1585,20 @@ Public Class Form1
                 If O_MDSMethodIdx = 0 Then ' Normal main document search
 
                     ' Search known words for recommendations (current document)
-                    For i = 0 To WordsNew.Count - 1
+                    For i = 0 To RecsNew.Count - 1
 
                         ' Get current word
-                        Dim KnownWord As String = WordsNew.Item(i)
+                        Dim KnownWord As String = RecsNew.Item(i).Text
 
                         ' If current word fits the known one, add it to the recommendations list
-                        If KnownWord.StartsWith(WordCurrent) And KnownWord.Length >= MinLength And CountNew.Item(i) >= MinCnt Then
+                        If KnownWord.StartsWith(WordCurrent) And KnownWord.Length >= MinLength And RecsNew.Item(i).Number >= MinCnt Then
                             If KnownWord.Replace(" ", "").Length <> WordCurrent.Length Then
 
                                 ' If necessary, removed already typed component from word suggestion
                                 If O_EntireWord Then
-                                    RecommendationsUnsorted.Add(New Recommendation(KnownWord.Replace(" ", ""), CountNew.Item(i)))
+                                    RecommendationsUnsorted.Add(New Recommendation(KnownWord.Replace(" ", ""), RecsNew.Item(i).Number))
                                 Else
-                                    RecommendationsUnsorted.Add(New Recommendation(KnownWord.Substring(WordCurrent.Length).Replace(" ", ""), CountNew.Item(i)))
+                                    RecommendationsUnsorted.Add(New Recommendation(KnownWord.Substring(WordCurrent.Length).Replace(" ", ""), RecsNew.Item(i).Number))
                                 End If
 
                             End If
@@ -1741,10 +1733,10 @@ Public Class Form1
                     '                ' Update data
                     '                TotalWordsOld = TotalWordsNew
                     '                WordsOld.Clear()
-                    '                CountOld.Clear()
+                    '                
 
                     '                WordsOld.AddRange(WordsNew)
-                    '                CountOld.AddRange(CountNew)
+                    '                
 
                     '                ' Update stored cumulative word
                     '                MainDocCumulativeActiveWord = WordCurrent
@@ -1800,11 +1792,11 @@ Public Class Form1
                                 TotalWordsOld = TotalWordsNew
 
                                 ' --- Update old recommendations list ---
-                                WordsOld.Clear()
-                                CountOld.Clear()
+                                RecsOld.Clear()
 
-                                WordsOld.AddRange(WordsNew)
-                                CountOld.AddRange(CountNew)
+
+                                RecsOld.AddRange(RecsNew)
+
 
                                 MustExit = True
 
@@ -1832,11 +1824,11 @@ Public Class Form1
                         TotalWordsOld = TotalWordsNew
 
                         ' --- Update old recommendations list ---
-                        WordsOld.Clear()
-                        CountOld.Clear()
+                        RecsOld.Clear()
 
-                        WordsOld.AddRange(WordsNew)
-                        CountOld.AddRange(CountNew)
+
+                        RecsOld.AddRange(RecsNew)
+
 
                         Continue While
 
@@ -1873,11 +1865,11 @@ Public Class Form1
                         TotalWordsOld = TotalWordsNew
 
                         ' --- Update old recommendations list ---
-                        WordsOld.Clear()
-                        CountOld.Clear()
+                        RecsOld.Clear()
 
-                        WordsOld.AddRange(WordsNew)
-                        CountOld.AddRange(CountNew)
+
+                        RecsOld.AddRange(RecsNew)
+
 
                         Continue While
 
@@ -2042,11 +2034,11 @@ Public Class Form1
                     FreezeRecs = False
 
                     ' --- Update old recommendations list ---
-                    WordsOld.Clear()
-                    CountOld.Clear()
+                    RecsOld.Clear()
 
-                    WordsOld.AddRange(WordsNew)
-                    CountOld.AddRange(CountNew)
+
+                    RecsOld.AddRange(RecsNew)
+
 
                     Continue While
 
@@ -2079,15 +2071,14 @@ Public Class Form1
                 'TO ADD
 
                 ' --- Update old recommendations list ---
-                WordsOld.Clear()
-                CountOld.Clear()
+                RecsOld.Clear()
 
-                WordsOld.AddRange(WordsNew)
-                CountOld.AddRange(CountNew)
+
+                RecsOld.AddRange(RecsNew)
+
 
                 ' Clear memory
-                WordsNew.Clear()
-                CountNew.Clear()
+                RecsNew.Clear()
 
                 ' Reverse recommendations (if appropriate)
                 If O_Reverse Then
@@ -2149,25 +2140,15 @@ Public Class Form1
                     ' Copy main document data list (because it can change during TextWorker's operation) -
                     Dim WordsListSortedFreeze As New List(Of Recommendation)
                     TextWorkerFreeze = True
-                    For i = 0 To WordsOld.Count - 1
-                        WordsListSortedFreeze.Add(New Recommendation(WordsOld.Item(i), CountOld.Item(i)))
-                    Next
-                    TextWorkerFreeze = False
+
+                    WordsListSortedFreeze.AddRange(RecsOld)
 
                     ' Sort main document data
-                    Dim Sorter As New RecSort
-                    WordsListSortedFreeze.Sort(Sorter)
-
-                    ' Organize main document data into trie function format
-                    Dim WordsList As New List(Of String)
-                    Dim CountsList As New List(Of Integer)
-                    For i = 0 To WordsListSortedFreeze.Count - 1
-                        WordsList.Add(WordsListSortedFreeze.Item(i).Text)
-                        CountsList.Add(WordsListSortedFreeze.Item(i).Number)
-                    Next
+                    WordsListSortedFreeze.Sort(New RecSortString)
 
                     ' Create trie
-                    MainDocTrie = Trie.CreateTrie(WordsList, CountsList, TrieDepth)
+                    MainDocTrie = Trie.CreateTrie(WordsListSortedFreeze, TrieDepth)
+                    TextWorkerFreeze = False
 
                     ' Wait proper time interval
                     Sleep(1000 * O_MDSTrieSrcInterval)
@@ -2392,7 +2373,7 @@ Public Class StringManipulation
     End Function
 
     ' Get words / word counts in a string
-    Shared Function GetWordData(Haystack As String, ByRef UniqueCountList As List(Of Integer), ByRef UniqueWordList As List(Of String), ByRef TotalWordCount As Integer, Optional SortWordList As Boolean = False, Optional IgnoreOneLtrWords As Boolean = True) As String()
+    Shared Function GetWordData(ByVal Haystack As String, ByRef UniqueRecList As List(Of Recommendation), ByRef TotalWordCount As Integer, Optional ByVal SortWordList As Boolean = False, Optional ByVal IgnoreOneLtrWords As Boolean = True) As String()
 
         ' Get word count for each word
         Dim UncountedString As String = Haystack.Replace(Chr(12), " ").Replace(vbCr, " ").Replace(vbLf, " ").Replace("  ", " ").Replace("  ", " ")
@@ -2419,12 +2400,6 @@ Public Class StringManipulation
 
         For i = 0 To WordsListAll.Length - 1
 
-            ' Exception handler 1
-            If UniqueWordList.Count <> UniqueCountList.Count Then
-                WordsListAll = {""} ' So errors can be detected - if error, the returned array will have 1 null item
-                Return WordsListAll
-            End If
-
             ' Get word
             Dim WordCur As String = WordsListAll.GetValue(i)
 
@@ -2439,8 +2414,7 @@ Public Class StringManipulation
             Else
 
                 ' Add past word to datalists
-                UniqueWordList.Add(WordPast)
-                UniqueCountList.Add(WordCnt)
+                UniqueRecList.Add(New Recommendation(WordPast, WordCnt))
 
                 ' Reset the word count
                 WordCnt = 1
@@ -2453,21 +2427,21 @@ Public Class StringManipulation
         Next
 
         ' Add very last word to datalists
-        If UniqueWordList.Count <> 0 Then
-            If CStr(WordsListAll.GetValue(WordsListAll.Count - 1)) = UniqueWordList.Item(UniqueWordList.Count - 1) Then
+        If UniqueRecList.Count <> 0 Then
+            If CStr(WordsListAll.GetValue(WordsListAll.Count - 1)) = UniqueRecList.Last.Text Then
 
                 ' Add 1 to count of last item
-                UniqueCountList.Item(UniqueCountList.Count - 1) += 1
+                UniqueRecList.Last.Number += 1
 
             Else
                 ' Add last item
-                UniqueWordList.Add(WordsListAll.GetValue(WordsListAll.Count - 1))
-                UniqueCountList.Add(WordCnt)
+                UniqueRecList.Add(New Recommendation(WordsListAll.Last, WordCnt))
+
             End If
         Else
-            ' Add last item
-            UniqueWordList.Add(WordsListAll.GetValue(WordsListAll.Count - 1))
-            UniqueCountList.Add(WordCnt)
+           ' Add last item
+            UniqueRecList.Add(New Recommendation(WordsListAll.Last, WordCnt))
+
         End If
 
         ' Return the list of uncounted words (sorted or unsorted, depending on specified parameters)
@@ -3128,7 +3102,7 @@ End Class
 Public Class Trie
 
     ' Given word and count lists, create a set of appropriate tries
-    Shared Function CreateTrie(WordsListSorted As List(Of String), CountsList As List(Of Integer), TrieLength As Integer) As NamedCountedList
+    Shared Function CreateTrie(ByVal RecsListSorted As List(Of Recommendation), ByVal TrieLength As Integer) As NamedCountedList
 
         ' Set up lists programmatically so they are of the proper depth
         Dim Trie As New NamedCountedList("", New List(Of Object))
@@ -3143,10 +3117,10 @@ Public Class Trie
             LastSplitWord.Add("")
         Next
 
-        For i = 0 To WordsListSorted.Count - 1
+        For i = 0 To RecsListSorted.Count - 1
 
             ' Get current word
-            Dim CurWord As String = WordsListSorted.Item(i)
+            Dim CurWord As String = RecsListSorted.Item(i).Text
 
             ' Skip if current word is nil
             If String.IsNullOrWhiteSpace(CurWord) Then
@@ -3193,7 +3167,7 @@ Public Class Trie
 
                     ' Final layer of trie addition
                     TrieAddRecursor.Name = SplitWord.Item(SplitWord.Count - 1)
-                    TrieAddRecursor.Count = CountsList.Item(i)
+                    TrieAddRecursor.Count = RecsListSorted.Item(i).Number
 
                     ' --- Add trie addition to trie ---
                     StartingList.List.Add(TrieAddition)
@@ -3255,7 +3229,7 @@ Public Class Trie
     End Sub
 
     ' Recursively search a trie and return all its members that satisfy a given condition
-    Shared Function SearchTrie(Trie As NamedCountedList, Needle As String, MinCnt As Integer, MinLength As Integer, IgnoreCase As Boolean) As List(Of Recommendation)
+    Shared Function SearchTrie(ByVal Trie As NamedCountedList, ByVal Needle As String, ByVal MinCnt As Integer, ByVal MinLength As Integer, ByVal IgnoreCase As Boolean) As List(Of Recommendation)
 
         ' List of search matches in the trie
         Dim Matches As New List(Of Recommendation)
@@ -3316,7 +3290,7 @@ Public Class Trie
         ' -- Recurse into any matching trie layers --
         For i = 0 To CurTrie.List.Count - 1
 
-            Dim CurTrieLayer As NamedCountedList = CType(CurTrie.List.Item(i), NamedCountedList)
+            Dim CurTrieLayer As NamedCountedList = CurTrie.List.Item(i)
             Try
 
                 ' Current needle character
@@ -3357,12 +3331,6 @@ Public Class Trie
 
     End Sub
 
-    ' Search
-
-    ' STEPS: recurse(givenTrie as ?)
-    '1: Add any tries (in givenTrie) that terminate to a list
-    '2: Find valid subtries (before recursing?)
-    '3: Recurse into all valid subtries
 
 End Class
 
