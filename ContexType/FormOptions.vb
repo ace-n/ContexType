@@ -1,7 +1,7 @@
 ﻿Public Class FormOptions
 
     Public SettingsChanged As Boolean = False
-    Private Sub FormOptions_Load(sender As System.Object, e As System.EventArgs) Handles MyBase.Load
+    Private Sub FormOptions_Load() Handles MyBase.Load
 
         Me.Text = Form1.Text & " - Options"
         Me.Location = Form1.MasterLocation
@@ -13,94 +13,94 @@
     End Sub
 
 #Region "Hints"
-    Public Sub H_Main(sender As System.Object, e As System.EventArgs) Handles Me.MouseEnter
+    Public Sub H_Main() Handles Me.MouseEnter
         txt_hints.Text = "Mouse over something to learn more about it."
     End Sub
 
     ' Groupboxes
-    Public Sub H_gbx1(sender As System.Object, e As System.EventArgs) Handles GroupBox1.MouseEnter
+    Public Sub H_gbx1() Handles GroupBox1.MouseEnter
         txt_hints.Text = "Mouse over something to learn more about it."
     End Sub
-    Public Sub H_gbx2(sender As System.Object, e As System.EventArgs) Handles GroupBox2.MouseEnter
+    Public Sub H_gbx2() Handles GroupBox2.MouseEnter
         txt_hints.Text = "Mouse over something to learn more about it."
     End Sub
-    Public Sub H_gbx3(sender As System.Object, e As System.EventArgs) Handles GroupBox3.MouseEnter
+    Public Sub H_gbx3() Handles GroupBox3.MouseEnter
         txt_hints.Text = "Mouse over something to learn more about it."
     End Sub
-    Public Sub H_gbx4(sender As System.Object, e As System.EventArgs) Handles GroupBox4.MouseEnter
+    Public Sub H_gbx4() Handles GroupBox4.MouseEnter
         txt_hints.Text = "Mouse over something to learn more about it."
     End Sub
-    Public Sub H_gbx5(sender As System.Object, e As System.EventArgs) Handles GroupBox5.MouseEnter
+    Public Sub H_gbx5() Handles GroupBox5.MouseEnter
         txt_hints.Text = "Mouse over something to learn more about it."
     End Sub
-    Public Sub H_gbx6(sender As System.Object, e As System.EventArgs) Handles GroupBox6.MouseEnter
+    Public Sub H_gbx6() Handles GroupBox6.MouseEnter
         txt_hints.Text = "Mouse over something to learn more about it."
     End Sub
 
     ' Textboxes
-    Public Sub H_MinLength(sender As System.Object, e As System.EventArgs) Handles txtMinLength.MouseEnter
+    Public Sub H_MinLength() Handles txtMinLength.MouseEnter
         txt_hints.Text = "Specifies the minimum number of letters a word must have for it to be suggested."
     End Sub
-    Public Sub H_MinCnt(sender As System.Object, e As System.EventArgs) Handles txtMinCnt.MouseEnter
+    Public Sub H_MinCnt() Handles txtMinCnt.MouseEnter
         txt_hints.Text = "Specifies the minimum number of times a word must appear in either the main or reference documents for it to be suggested."
     End Sub
-    Public Sub H_AutoPrc(sender As System.Object, e As System.EventArgs) Handles txtAutoPrc.MouseEnter
+    Public Sub H_AutoPrc() Handles txtAutoPrc.MouseEnter
         txt_hints.Text = "Specifies how many letters (number or percentage) a partial word must share with a suggested one before the program autotypes it. Percentages are less than 1 (ex 0.55)"
     End Sub
-    Public Sub H_MinAcc(sender As System.Object, e As System.EventArgs) Handles txtMinAcc.MouseEnter
+    Public Sub H_MinAcc() Handles txtMinAcc.MouseEnter
         txt_hints.Text = "Specifies how relevant the suggestions provided must be before they will be shown in a drop-down list."
     End Sub
-    Public Sub H_TrieDepth(sender As System.Object, e As System.EventArgs) Handles txtRefTrieDepth.MouseEnter
+    Public Sub H_TrieDepth() Handles txtRefTrieDepth.MouseEnter
         txt_hints.Text = "Specifies how many layers the trie will use. More layers need more memory, but improve sorting speed for large numbers of words. This system is only for reference documents."
     End Sub
-    Public Sub H_IdeaCountLimit(sender As System.Object, e As System.EventArgs) Handles txtIdeaCountLimit.MouseEnter
+    Public Sub H_IdeaCountLimit() Handles txtIdeaCountLimit.MouseEnter
         txt_hints.Text = "Specifies the maximum number of ideas that can be suggested at a time. Setting this number to 0 shows all suggestions."
     End Sub
 
     ' Boolean options
-    Public Sub H_ShowWord(sender As System.Object, e As System.EventArgs) Handles cbxEntireWord.MouseEnter
+    Public Sub H_ShowWord() Handles cbxEntireWord.MouseEnter
         txt_hints.Text = "If checked, the entire suggestion word is shown. Otherwise, only the letters you haven't typed yet are shown."
     End Sub
-    Public Sub H_AutoType(sender As System.Object, e As System.EventArgs) Handles cbxAuto.MouseEnter
+    Public Sub H_AutoType() Handles cbxAuto.MouseEnter
         txt_hints.Text = "If checked, the program will automatically type what it thinks you are typing without asking."
     End Sub
-    Public Sub H_MoveHopper(sender As System.Object, e As System.EventArgs) Handles cbxMoveBox.MouseEnter
+    Public Sub H_MoveHopper() Handles cbxMoveBox.MouseEnter
         txt_hints.Text = "If checked, the suggestions window will follow the cursor. Otherwise, it will stay in one place."
     End Sub
-    Public Sub H_CapitalSense(sender As System.Object, e As System.EventArgs) Handles cbxToLower.MouseEnter
+    Public Sub H_CapitalSense() Handles cbxToLower.MouseEnter
         txt_hints.Text = "If checked, word case (capitalization) will be ignored. Otherwise, it will not be."
     End Sub
-    Public Sub H_SpaceAppend(sender As System.Object, e As System.EventArgs) Handles cbxSpace.MouseEnter
+    Public Sub H_SpaceAppend() Handles cbxSpace.MouseEnter
         txt_hints.Text = "If checked, a space will be added after each autocompleted word."
     End Sub '
-    Public Sub H_RootCnt(sender As System.Object, e As System.EventArgs) Handles cbx_SM_storedRefs.MouseEnter
+    Public Sub H_RootCnt() Handles cbx_SM_storedRefs.MouseEnter
         txt_hints.Text = "If checked, ContexType will save references between uses."
     End Sub
     Public Sub H_CopyPasteMethod(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles cbxCopyPaste.MouseEnter
         txt_hints.Text = "If checked, selected suggestions will be copy-pasted into the document in one block. If not, they will be auto-typed letter by letter."
     End Sub
 
-    Public Sub H_NumSelect(sender As System.Object, e As System.EventArgs) Handles cbxNumpadSelection.MouseEnter
+    Public Sub H_NumSelect() Handles cbxNumpadSelection.MouseEnter
         txt_hints.Text = "If checked, a number will appear next to some ideas allowing you to select a specific idea."
     End Sub
-    Public Sub H_NumpadSelectEnabled(sender As System.Object, e As System.EventArgs) Handles cbxNumSelection_UseNumpad.MouseEnter
+    Public Sub H_NumpadSelectEnabled() Handles cbxNumSelection_UseNumpad.MouseEnter
         txt_hints.Text = "If checked, numerical suggestion selection will use the numpad. Otherwise, the horizontal number line (at the top of most keyboards) will be used."
     End Sub
 
     ' Sorting method
-    Public Sub H_LengthSort(sender As System.Object, e As System.EventArgs) Handles rbn_srt_Len.MouseEnter
+    Public Sub H_LengthSort() Handles rbn_srt_Len.MouseEnter
         txt_hints.Text = "Sort words by length."
     End Sub
-    Public Sub H_NumSort(sender As System.Object, e As System.EventArgs) Handles rbn_srt_pop.MouseEnter
+    Public Sub H_NumSort() Handles rbn_srt_pop.MouseEnter
         txt_hints.Text = "Sort words by the number of them present in main and reference document(s)."
     End Sub
-    Public Sub H_DistSort(sender As System.Object, e As System.EventArgs) Handles rbn_srt_dst.MouseEnter
+    Public Sub H_DistSort() Handles rbn_srt_dst.MouseEnter
         txt_hints.Text = "Sort words by closest number of words between current and suggested words in main document."
     End Sub
     Public Sub H_NoSort(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles rbn_srt_none.MouseEnter
         txt_hints.Text = "Don't sort words at all"
     End Sub
-    Public Sub H_ReverseRecs(sender As System.Object, e As System.EventArgs) Handles cbx_RecsReverse.MouseEnter
+    Public Sub H_ReverseRecs() Handles cbx_RecsReverse.MouseEnter
         txt_hints.Text = "If checked, the order of words in the word lists will be reversed."
     End Sub
     Public Sub H_CPUConsumption(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles tbrCPUConsumption.MouseEnter, lblCPUConsumption.MouseEnter
@@ -120,13 +120,13 @@
 
     ' Auto-update
     Public Sub H_UpdateAuto(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles rbn_Upd8_Auto.MouseEnter
-        txt_hints.Text = "If checked, ContexType will attempt to automatically update itself every time it is ran."
+        txt_hints.Text = "If checked, ContexType will try to automatically check and install updates every time it is ran."
     End Sub
     Public Sub H_UpdateAsk(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles rbn_Upd8_Ask.MouseEnter
-        txt_hints.Text = "If checked, ContexType will ask you whether it is allowed to update itself every time it is ran."
+        txt_hints.Text = "If checked, ContexType will try to automatically check for updates every time it is ran. If an update is found, ContexType will ask you for permission to install it."
     End Sub
     Public Sub H_UpdateNone(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles rbn_Upd8_None.MouseEnter
-        txt_hints.Text = "No automatic updating will be performed."
+        txt_hints.Text = "If checked, no automatic updating will be performed."
     End Sub
 
     ' Remappers
@@ -148,14 +148,14 @@
         txt_hints.Text = "Click this button to reset the stored settings to their defaults."
     End Sub
     Public Sub H_SM_UseStored(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles cbx_SM_useStored.MouseEnter
-        txt_hints.Text = "If checked, ContexType will attempt to use stored settings. Otherwise, it will use the default settings."
+        txt_hints.Text = "If checked, ContexType will try to use its previous settings. Otherwise, it will use the default settings."
     End Sub
     Public Sub H_SM_StoreSettings(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles cbx_SM_storeSettings.MouseEnter
         txt_hints.Text = "If checked, ContexType will save the current settings and use them next time if possible."
     End Sub
 #End Region
 
-    Private Sub btnHome_Click(sender As System.Object, e As System.EventArgs) Handles btnHome.Click
+    Private Sub btnHome_Click() Handles btnHome.Click
 
         If SettingsChanged Then
             Dim Result As Integer = Settings.UpdateSettingsFile()
@@ -172,40 +172,40 @@
     End Sub
 
 #Region "Settings Updates"
-    Private Sub cbxEntireWord_CheckedChanged(sender As System.Object, e As System.EventArgs) Handles cbxEntireWord.CheckedChanged
+    Private Sub cbxEntireWord_CheckedChanged() Handles cbxEntireWord.CheckedChanged
         Form1.O_EntireWord = cbxEntireWord.Checked
         SettingsChanged = True
     End Sub
 
-    Private Sub cbxAuto_CheckedChanged(sender As System.Object, e As System.EventArgs) Handles cbxAuto.CheckedChanged
+    Private Sub cbxAuto_CheckedChanged() Handles cbxAuto.CheckedChanged
         Form1.O_AutoType = cbxAuto.Checked
         txtAutoPrc.Visible = cbxAuto.Checked
         Label4.Visible = cbxAuto.Checked
         SettingsChanged = True
     End Sub
 
-    Private Sub cbxMoveBox_CheckedChanged(sender As System.Object, e As System.EventArgs) Handles cbxMoveBox.CheckedChanged
+    Private Sub cbxMoveBox_CheckedChanged() Handles cbxMoveBox.CheckedChanged
         Form1.O_RecsFollowCursor = cbxMoveBox.Checked
         SettingsChanged = True
     End Sub
 
-    Private Sub cbxToLower_CheckedChanged(sender As System.Object, e As System.EventArgs) Handles cbxToLower.CheckedChanged
+    Private Sub cbxToLower_CheckedChanged() Handles cbxToLower.CheckedChanged
         Form1.O_IgnoreCase = cbxToLower.Checked
         SettingsChanged = True
     End Sub
 
-    Private Sub cbxSpace_CheckedChanged(sender As System.Object, e As System.EventArgs) Handles cbxSpace.CheckedChanged
+    Private Sub cbxSpace_CheckedChanged() Handles cbxSpace.CheckedChanged
         Form1.O_TypeSpace = cbxSpace.Checked
         SettingsChanged = True
     End Sub
 
-    Private Sub cbx_RecsReverse_CheckedChanged(sender As System.Object, e As System.EventArgs) Handles cbx_RecsReverse.CheckedChanged
+    Private Sub cbx_RecsReverse_CheckedChanged() Handles cbx_RecsReverse.CheckedChanged
         Form1.O_Reverse = cbx_RecsReverse.Checked
         SettingsChanged = True
     End Sub
 #End Region
 
-    Private Sub OnClose(sender As System.Object, e As System.Windows.Forms.FormClosedEventArgs) Handles MyBase.FormClosed
+    Private Sub OnClose(ByVal sender As System.Object, ByVal e As System.Windows.Forms.FormClosedEventArgs) Handles MyBase.FormClosed
 
         ' Close main form
         Form1.Close()
@@ -214,7 +214,7 @@
 
 #Region "Settings Updates #2"
     ' Update settings
-    Private Sub txtMinCnt_TextChanged(sender As System.Object, e As System.EventArgs) Handles txtMinCnt.TextChanged
+    Private Sub txtMinCnt_TextChanged() Handles txtMinCnt.TextChanged
 
         Try
             If CInt(txtMinCnt.Text) > 0 Then
@@ -230,7 +230,7 @@
 
     End Sub
 
-    Private Sub txtMinLength_TextChanged(sender As System.Object, e As System.EventArgs) Handles txtMinLength.TextChanged
+    Private Sub txtMinLength_TextChanged() Handles txtMinLength.TextChanged
 
         Try
             If CInt(txtMinLength.Text) > 1 Then
@@ -246,7 +246,7 @@
 
     End Sub
 
-    Private Sub txtMinAcc_TextChanged(sender As System.Object, e As System.EventArgs) Handles txtMinAcc.TextChanged
+    Private Sub txtMinAcc_TextChanged() Handles txtMinAcc.TextChanged
         Try
             If CDbl(txtMinAcc.Text) < 0 Or CDbl(txtMinAcc.Text) >= 1 Then
                 txtMinAcc.BackColor = Color.Red
@@ -260,7 +260,7 @@
         End Try
     End Sub
 
-    Private Sub txtAutoPrc_TextChanged(sender As System.Object, e As System.EventArgs) Handles txtAutoPrc.TextChanged
+    Private Sub txtAutoPrc_TextChanged() Handles txtAutoPrc.TextChanged
         Try
             If CDbl(txtAutoPrc.Text) > 0 Then
                 Form1.AutoPercentage = CDbl(txtAutoPrc.Text)
@@ -288,31 +288,31 @@
         SettingsChanged = True
     End Sub
     Private Sub rbn_srt_dst_CheckedChanged() Handles rbn_srt_dst.CheckedChanged
+        Form1.O_S_Dist = rbn_srt_dst.Checked
         SettingsChanged = True
-        Form1.O_S_Dist = True
     End Sub
 
     ' --- Key remapping ---
-    Private Sub AcceptRemap(sender As System.Object, e As System.EventArgs) Handles btn_rmp_Accept.Click
+    Private Sub AcceptRemap() Handles btn_rmp_Accept.Click
         Form1.Remap(Form1.VK_Accept)
         SettingsChanged = True
     End Sub
 
-    Private Sub HideWordsRemap(sender As System.Object, e As System.EventArgs) Handles btn_rmp_HideList.Click
+    Private Sub HideWordsRemap() Handles btn_rmp_HideList.Click
         Form1.Remap(Form1.VK_ClearList)
         SettingsChanged = True
     End Sub
 
-    Private Sub ArrowUpRemap(sender As System.Object, e As System.EventArgs) Handles btn_rmp_ArrowUp.Click
+    Private Sub ArrowUpRemap() Handles btn_rmp_ArrowUp.Click
         Form1.Remap(Form1.VK_ArrowUp)
         SettingsChanged = True
     End Sub
-    Private Sub ArrowDownRemap(sender As System.Object, e As System.EventArgs) Handles btn_rmp_ArrowDown.Click
+    Private Sub ArrowDownRemap() Handles btn_rmp_ArrowDown.Click
         Form1.Remap(Form1.VK_ArrowDown)
         SettingsChanged = True
     End Sub
 
-    Private Sub btn_SM_resetStored_Click(sender As System.Object, e As System.EventArgs) Handles btn_SM_resetStored.Click
+    Private Sub btn_SM_resetStored_Click() Handles btn_SM_resetStored.Click
 
         ' Get settings file location
         Dim EPath As String = Process.GetCurrentProcess.MainModule.FileName
@@ -332,7 +332,7 @@
 
     End Sub
 
-    Private Sub cbx_SM_useStored_CheckedChanged(sender As System.Object, e As System.EventArgs) Handles cbx_SM_useStored.CheckedChanged
+    Private Sub cbx_SM_useStored_CheckedChanged() Handles cbx_SM_useStored.CheckedChanged
 
         If cbx_SM_useStored.Checked Then
 
@@ -348,7 +348,7 @@
 
     End Sub
 
-    Private Sub cbx_SM_storedRefs_CheckedChanged(sender As System.Object, e As System.EventArgs) Handles cbx_SM_storedRefs.CheckedChanged
+    Private Sub cbx_SM_storedRefs_CheckedChanged() Handles cbx_SM_storedRefs.CheckedChanged
         Form1.SM_UseStoredRefs = cbx_SM_storedRefs.Checked
         If cbx_SM_storedRefs.Checked Then
             Dim Result As Integer = Settings.QueryReferences()
@@ -369,7 +369,7 @@
         End If
     End Sub
 
-    Private Sub txtRefTrieDepth_TextChanged(sender As System.Object, e As System.EventArgs) Handles txtRefTrieDepth.TextChanged
+    Private Sub txtRefTrieDepth_TextChanged() Handles txtRefTrieDepth.TextChanged
         Try
             If CInt(txtRefTrieDepth.Text) > 0 Then
                 Form1.TrieDepth = CDbl(txtRefTrieDepth.Text)
@@ -383,7 +383,7 @@
         End Try
     End Sub
 
-    Private Sub txtIdeaCountLimit_TextChanged(sender As System.Object, e As System.EventArgs) Handles txtIdeaCountLimit.TextChanged
+    Private Sub txtIdeaCountLimit_TextChanged() Handles txtIdeaCountLimit.TextChanged
         Try
             If CInt(txtIdeaCountLimit.Text) >= 0 Then
                 Form1.IdeaCountLimit = CDbl(txtIdeaCountLimit.Text)
@@ -397,22 +397,22 @@
         End Try
     End Sub
 
-    Private Sub rbnUpdate_Auto(sender As System.Object, e As System.EventArgs) Handles rbn_Upd8_Auto.CheckedChanged
+    Private Sub rbnUpdate_Auto() Handles rbn_Upd8_Auto.CheckedChanged
         Form1.UpdateMode = 2
         SettingsChanged = True
     End Sub
-    Private Sub rbnUpdate_Ask(sender As System.Object, e As System.EventArgs) Handles rbn_Upd8_Ask.CheckedChanged
+    Private Sub rbnUpdate_Ask() Handles rbn_Upd8_Ask.CheckedChanged
         Form1.UpdateMode = 1
         SettingsChanged = True
     End Sub
-    Private Sub rbnUpdate_None(sender As System.Object, e As System.EventArgs) Handles rbn_Upd8_None.CheckedChanged
+    Private Sub rbnUpdate_None() Handles rbn_Upd8_None.CheckedChanged
         Form1.UpdateMode = 0
         SettingsChanged = True
     End Sub
 
 #End Region
 
-    Private Sub cbxNumpadSelection_CheckedChanged(sender As System.Object, e As System.EventArgs) Handles cbxNumpadSelection.CheckedChanged
+    Private Sub cbxNumpadSelection_CheckedChanged() Handles cbxNumpadSelection.CheckedChanged
 
         ' Standard settings update component
         Form1.O_NumSelection = cbxNumpadSelection.Checked
@@ -436,7 +436,7 @@
         End If
     End Sub
 
-    Private Sub cbxNumSelection_UseNumpad_CheckedChanged(sender As System.Object, e As System.EventArgs) Handles cbxNumSelection_UseNumpad.CheckedChanged
+    Private Sub cbxNumSelection_UseNumpad_CheckedChanged() Handles cbxNumSelection_UseNumpad.CheckedChanged
 
         ' Update settings
         SettingsChanged = True

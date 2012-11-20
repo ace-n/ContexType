@@ -34,7 +34,7 @@ Public Class Form1
 
     ' ----- Google project info - used in autoupdate -----
     ' Current version (MUST BE AN INTEGER)
-    Public Version As Integer = 26
+    Public Version As Integer = 28
 
     ' Latest version path
     Public VersionURL As String = "http://contextype.googlecode.com/svn/latestversion.txt"
@@ -1365,8 +1365,6 @@ Public Class Form1
                     Continue While
                 End If
 
-                Throttle(True)
-
                 ' Get changes from main lists
                 Dim WordTextCopy As String = WordText
                 Dim WordTextPrevCopy As String = WordTextPrev
@@ -1405,6 +1403,7 @@ Public Class Form1
                     ' Update data
                     TotalWordsOld = TotalWordsNew
 
+                    RecsOld.Clear()
                     RecsOld.AddRange(RecsNew)
 
                     Continue While
@@ -3287,21 +3286,21 @@ Public Class Trie
 
         ' Get next trie layer
 
+        ' Current needle character
+        Dim CurNeedleChar As String = ""
+        If TrieLayer < Needle.Length Then
+            If IgnoreCase Then
+                CurNeedleChar = Char.ToLowerInvariant(Needle.Chars(TrieLayer))
+            Else
+                CurNeedleChar = Needle.Chars(TrieLayer)
+            End If
+        End If
+
         ' -- Recurse into any matching trie layers --
         For i = 0 To CurTrie.List.Count - 1
 
             Dim CurTrieLayer As NamedCountedList = CurTrie.List.Item(i)
             Try
-
-                ' Current needle character
-                Dim CurNeedleChar As String = ""
-                If TrieLayer < Needle.Length Then
-                    If IgnoreCase Then
-                        CurNeedleChar = Char.ToLowerInvariant(Needle.Chars(TrieLayer))
-                    Else
-                        CurNeedleChar = Needle.Chars(TrieLayer)
-                    End If
-                End If
 
                 ' Name of next trie to be recursively parsed
                 Dim CurTrieName As String = CurTrieLayer.Name

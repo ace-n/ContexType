@@ -66,7 +66,7 @@ Partial Class Form1
         Me.lbox_files.Margin = New System.Windows.Forms.Padding(4)
         Me.lbox_files.Name = "lbox_files"
         Me.lbox_files.SelectionMode = System.Windows.Forms.SelectionMode.MultiExtended
-        Me.lbox_files.Size = New System.Drawing.Size(1003, 292)
+        Me.lbox_files.Size = New System.Drawing.Size(987, 340)
         Me.lbox_files.TabIndex = 19
         '
         'GroupBox3
@@ -81,14 +81,14 @@ Partial Class Form1
         Me.GroupBox3.Margin = New System.Windows.Forms.Padding(4)
         Me.GroupBox3.Name = "GroupBox3"
         Me.GroupBox3.Padding = New System.Windows.Forms.Padding(4)
-        Me.GroupBox3.Size = New System.Drawing.Size(1068, 334)
+        Me.GroupBox3.Size = New System.Drawing.Size(1058, 375)
         Me.GroupBox3.TabIndex = 22
         Me.GroupBox3.TabStop = False
         Me.GroupBox3.Text = "Reference Documents"
         '
         'btn_CopyRefs
         '
-        Me.btn_CopyRefs.Location = New System.Drawing.Point(1028, 131)
+        Me.btn_CopyRefs.Location = New System.Drawing.Point(1011, 131)
         Me.btn_CopyRefs.Margin = New System.Windows.Forms.Padding(4)
         Me.btn_CopyRefs.Name = "btn_CopyRefs"
         Me.btn_CopyRefs.Size = New System.Drawing.Size(32, 28)
@@ -98,7 +98,7 @@ Partial Class Form1
         '
         'btn_UpdateRef
         '
-        Me.btn_UpdateRef.Location = New System.Drawing.Point(1028, 95)
+        Me.btn_UpdateRef.Location = New System.Drawing.Point(1011, 95)
         Me.btn_UpdateRef.Margin = New System.Windows.Forms.Padding(4)
         Me.btn_UpdateRef.Name = "btn_UpdateRef"
         Me.btn_UpdateRef.Size = New System.Drawing.Size(32, 28)
@@ -108,7 +108,7 @@ Partial Class Form1
         '
         'btn_RemoveRef
         '
-        Me.btn_RemoveRef.Location = New System.Drawing.Point(1028, 58)
+        Me.btn_RemoveRef.Location = New System.Drawing.Point(1011, 58)
         Me.btn_RemoveRef.Margin = New System.Windows.Forms.Padding(4)
         Me.btn_RemoveRef.Name = "btn_RemoveRef"
         Me.btn_RemoveRef.Size = New System.Drawing.Size(32, 28)
@@ -118,7 +118,7 @@ Partial Class Form1
         '
         'btn_AddRef
         '
-        Me.btn_AddRef.Location = New System.Drawing.Point(1028, 22)
+        Me.btn_AddRef.Location = New System.Drawing.Point(1011, 23)
         Me.btn_AddRef.Margin = New System.Windows.Forms.Padding(4)
         Me.btn_AddRef.Name = "btn_AddRef"
         Me.btn_AddRef.Size = New System.Drawing.Size(32, 28)
@@ -129,11 +129,11 @@ Partial Class Form1
         'txt_hints
         '
         Me.txt_hints.BackColor = System.Drawing.SystemColors.Control
-        Me.txt_hints.Location = New System.Drawing.Point(-3, 383)
+        Me.txt_hints.Location = New System.Drawing.Point(0, 419)
         Me.txt_hints.Margin = New System.Windows.Forms.Padding(4)
         Me.txt_hints.Name = "txt_hints"
         Me.txt_hints.ReadOnly = True
-        Me.txt_hints.Size = New System.Drawing.Size(1101, 22)
+        Me.txt_hints.Size = New System.Drawing.Size(1087, 22)
         Me.txt_hints.TabIndex = 23
         '
         'MenuStrip1
@@ -143,7 +143,7 @@ Partial Class Form1
         Me.MenuStrip1.Location = New System.Drawing.Point(0, 0)
         Me.MenuStrip1.Name = "MenuStrip1"
         Me.MenuStrip1.Padding = New System.Windows.Forms.Padding(8, 2, 0, 2)
-        Me.MenuStrip1.Size = New System.Drawing.Size(1100, 28)
+        Me.MenuStrip1.Size = New System.Drawing.Size(1087, 28)
         Me.MenuStrip1.TabIndex = 24
         Me.MenuStrip1.Text = "MenuStrip1"
         '
@@ -217,7 +217,7 @@ Partial Class Form1
         Me.AutoScaleDimensions = New System.Drawing.SizeF(8.0!, 16.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
         Me.BackColor = System.Drawing.SystemColors.Control
-        Me.ClientSize = New System.Drawing.Size(1100, 400)
+        Me.ClientSize = New System.Drawing.Size(1087, 441)
         Me.Controls.Add(Me.txt_hints)
         Me.Controls.Add(Me.GroupBox3)
         Me.Controls.Add(Me.MenuStrip1)
@@ -225,8 +225,8 @@ Partial Class Form1
         Me.Icon = CType(resources.GetObject("$this.Icon"), System.Drawing.Icon)
         Me.MainMenuStrip = Me.MenuStrip1
         Me.Margin = New System.Windows.Forms.Padding(4)
-        Me.MaximumSize = New System.Drawing.Size(1106, 433)
-        Me.MinimumSize = New System.Drawing.Size(1106, 433)
+        Me.MaximumSize = New System.Drawing.Size(1093, 476)
+        Me.MinimumSize = New System.Drawing.Size(1093, 476)
         Me.Name = "Form1"
         Me.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide
         Me.Text = "ContexType v"

@@ -30,17 +30,18 @@ Partial Class FormFAQ
         'Label1
         '
         Me.Label1.AutoSize = True
-        Me.Label1.Location = New System.Drawing.Point(17, 16)
+        Me.Label1.Font = New System.Drawing.Font("Microsoft Sans Serif", 9.0!, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, CType(0, Byte))
+        Me.Label1.Location = New System.Drawing.Point(21, 38)
         Me.Label1.Margin = New System.Windows.Forms.Padding(4, 0, 4, 0)
         Me.Label1.Name = "Label1"
-        Me.Label1.Size = New System.Drawing.Size(1010, 289)
+        Me.Label1.Size = New System.Drawing.Size(1041, 306)
         Me.Label1.TabIndex = 0
         Me.Label1.Text = resources.GetString("Label1.Text")
         '
         'btnDone
         '
-        Me.btnDone.Location = New System.Drawing.Point(470, 309)
-        Me.btnDone.Margin = New System.Windows.Forms.Padding(4, 4, 4, 4)
+        Me.btnDone.Location = New System.Drawing.Point(486, 388)
+        Me.btnDone.Margin = New System.Windows.Forms.Padding(4)
         Me.btnDone.Name = "btnDone"
         Me.btnDone.Size = New System.Drawing.Size(100, 28)
         Me.btnDone.TabIndex = 1
@@ -51,10 +52,11 @@ Partial Class FormFAQ
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(8.0!, 16.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
-        Me.ClientSize = New System.Drawing.Size(1040, 348)
+        Me.ClientSize = New System.Drawing.Size(1075, 429)
         Me.Controls.Add(Me.btnDone)
         Me.Controls.Add(Me.Label1)
-        Me.Margin = New System.Windows.Forms.Padding(4, 4, 4, 4)
+        Me.Icon = CType(resources.GetObject("$this.Icon"), System.Drawing.Icon)
+        Me.Margin = New System.Windows.Forms.Padding(4)
         Me.Name = "FormFAQ"
         Me.Text = "Help"
         Me.ResumeLayout(False)
