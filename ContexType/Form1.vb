@@ -34,7 +34,7 @@ Public Class Form1
 
     ' ----- Google project info - used in autoupdate -----
     ' Current version (MUST BE AN INTEGER)
-    Public Version As Integer = 28
+    Public Version As Integer = 29
 
     ' Latest version path
     Public VersionURL As String = "http://contextype.googlecode.com/svn/latestversion.txt"
@@ -2338,11 +2338,11 @@ Public Class StringManipulation
         ' Split strings into lists of characters
         Dim Chars1 As New List(Of String)
         For i = 0 To Str1.Length - 1
-            Chars1.Add(Str1.Substring(i, 1))
+            Chars1.Add(Str1.Chars(i))
         Next
         Dim Chars2 As New List(Of String)
         For i = 0 To Str2.Length - 1
-            Chars2.Add(Str2.Substring(i, 1))
+            Chars2.Add(Str2.Chars(i))
         Next
 
         ' Count how many characters are in common between the lists
@@ -2508,7 +2508,7 @@ Public Class StringManipulation
     ' Remove starting spaces from a string
     Shared Function RemoveStarterSpaces(ByVal Str As String) As String
         Dim Index As Integer = 0
-        While String.IsNullOrWhiteSpace(Str.Substring(Index, 1))
+        While String.IsNullOrWhiteSpace(Str.Chars(Index))
             Index += 1
         End While
         Return Str.Substring(Index)
@@ -2538,7 +2538,7 @@ Public Class StringManipulation
 
         ' Search forward (from start)
         Dim FwdIndex As Integer = 0
-        While Str1.Substring(FwdIndex, 1) = Str2.Substring(FwdIndex, 1)
+        While Str1.Chars(FwdIndex) = Str2.Chars(FwdIndex)
             FwdIndex += 1
 
             ' If the next FwdIndex is greater than the minimum string length, return the smaller string
@@ -2554,7 +2554,7 @@ Public Class StringManipulation
         ' Search backward (from end)
         Dim RearIndex1 As Integer = Str1.Length - 2
         Dim RearIndex2 As Integer = Str2.Length - 2
-        While Str1.Substring(RearIndex1, 1) = Str2.Substring(RearIndex2, 1)
+        While Str1.Chars(RearIndex1) = Str2.Chars(RearIndex2)
 
             ' Subtract from indices
             RearIndex1 -= 1
@@ -2586,14 +2586,14 @@ Public Class CaseStringSort
 
             ' Find main index
             Dim Case1 As Integer
-            If x.Substring(i, 1) = x.Substring(i, 1).ToUpper Then
+            If Char.IsUpper(x.Chars(i)) Then
                 Case1 = 1
             Else
                 Case1 = 0
             End If
 
             Dim Case2 As Integer
-            If y.Substring(i, 1) = y.Substring(i, 1).ToUpper Then
+            If Char.IsUpper(y.Chars(i)) Then
                 Case2 = 1
             Else
                 Case2 = 0
@@ -3137,7 +3137,7 @@ Public Class Trie
 
                 ' Split the word further
                 If j <> TrieLength - 1 Then
-                    SplitWord.Add(CurWord.Substring(j, 1))
+                    SplitWord.Add(CurWord.Chars(j))
                 Else
                     SplitWord.Add(CurWord.Substring(j))
                 End If
