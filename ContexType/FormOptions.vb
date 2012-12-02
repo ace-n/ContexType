@@ -487,5 +487,4 @@
         Form1.TargetCPUUse = CInt(tbrCPUConsumption.Value * 5)
         lblCPUConsumption.Text = "Target CPU Consumption: " & Form1.TargetCPUUse & "%"
     End Sub
-
 End Class

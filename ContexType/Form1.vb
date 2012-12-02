@@ -34,7 +34,7 @@ Public Class Form1
 
     ' ----- Google project info - used in autoupdate -----
     ' Current version (MUST BE AN INTEGER)
-    Public Version As Integer = 29
+    Public Version As Integer = 30
 
     ' Latest version path
     Public VersionURL As String = "http://contextype.googlecode.com/svn/latestversion.txt"
@@ -1298,7 +1298,6 @@ Public Class Form1
                 ' If document isn't active, loop again
                 Dim SZ As String = GetActiveWindowTitle(TitleLength)
                 If Not GetActiveWindowTitle(TitleLength).Contains("Microsoft Word") Then
-                    Sleep(50)
                     Throttle(False)
                     Continue While
                 End If
@@ -1313,12 +1312,13 @@ Public Class Form1
                     WordDoc = WordApp.ActiveDocument
                 Catch ex As Exception
 
-                    ' Known bug with no known (to author) fix - band aid exception handler to auto-restart CType (which usually fixes things)
+                    ' Known bug with no known (to author) fix - band aid warning to restart CType (which usually fixes things)
+                    '   NOTE: Auto-restart was removed because it never worked.
                     If ex.Message.Contains("The RPC server is unavailable.") Then
-                        MsgBox("A minor error has occurred within the ContexType system (RPC server error) that requires that ContexType restart. ContexType will now be restarted.")
+                        MsgBox("A minor error has occurred within the ContexType system (RPC server error) that requires that ContexType restart. ContexType will now exit.")
 
                         ' Launch another ContexType window
-                        Shell(Process.GetCurrentProcess.MainModule.FileName)
+                        'Shell(Process.GetCurrentProcess.MainModule.FileName)
 
                         ' Close the active one
                         Me.Close()
@@ -1359,7 +1359,7 @@ Public Class Form1
                 End If
 
                 ' If no edit happened, go around
-                If WordTextPrev = WordText Then
+                If WordTextPrev.Length = WordText.Length Then ' Using .length doesn't exactly check for equality, but it is MUCH faster and accurate enough for our purposes
                     WordPast = WordCurrent
                     Throttle(True)
                     Continue While
