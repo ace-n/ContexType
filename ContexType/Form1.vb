@@ -34,7 +34,7 @@ Public Class Form1
 
     ' ----- Google project info - used in autoupdate -----
     ' Current version (MUST BE AN INTEGER)
-    Public Version As Integer = 30
+    Public Version As Integer = 31
 
     ' Latest version path
     Public VersionURL As String = "http://contextype.googlecode.com/svn/latestversion.txt"
@@ -1069,10 +1069,8 @@ Public Class Form1
     Private Sub ListBox1_DragDrop(ByVal sender As Object, ByVal e As System.Windows.Forms.DragEventArgs) Handles lbox_files.DragDrop
         If e.Data.GetDataPresent(DataFormats.FileDrop) Then
 
-            ' Thrown Error Booleans - to avoid spamming a message over and over again
-            Dim FileNotExistError As Boolean = False
-            Dim WrongTypeError As Boolean = False
-            Dim FileRepeatedError As Boolean = False
+            ' Thrown Error Boolean - to avoid spamming messages over and over again
+            Dim NoErrorsSoFar As Boolean = True
 
             ' File list
             Dim RefList As String()
@@ -1087,29 +1085,17 @@ Public Class Form1
                 ' Get filepath
                 Dim FilePath As String = CStr(RefList.GetValue(i))
 
-                ' Make sure file exists - if not, skip it
-                If Not Dir(FilePath) <> "" And Not FileNotExistError Then
-                    FileNotExistError = True
-                    MsgBox("One or more of the files you specified for referencing does not exist. Please only use files that exist as references.", MsgBoxStyle.Exclamation)
+                ' Validate file
+                Dim ValidationResult As Integer = Settings.ValidateReference(FilePath, True)
+
+                ' Skip files with errors
+                If ValidationResult <> 0 Then
+                    NoErrorsSoFar = NoErrorsSoFar OrElse ValidationResult > 1 ' One way flag that changes iff. ValidationResult isn't 0 or 1
                     Continue For
                 End If
 
-                ' Get extension
+                ' Get file extension
                 Dim FileExt As String = FilePath.Substring(FilePath.LastIndexOf("."))
-
-                ' Make sure file extension is accepted - otherwise skip it
-                If Not (PlainTextFileExts.Contains(FileExt) Or DocFileExts.Contains(FileExt)) And Not WrongTypeError Then
-                    WrongTypeError = True
-                    MsgBox("One or more of the files you specified for referencing is not an acceptable type. Please only use plain text files (" & TxtStr & ") and Microsoft Word documents (" & DocStr & ").", MsgBoxStyle.Exclamation)
-                    Continue For
-                End If
-
-                ' Make sure the reference isn't repeated
-                If EntirePathFileList.Contains(FilePath) And Not FileRepeatedError Then
-                    MsgBox("One or more of the files you specified for referencing is referenced multiple times. Please remove the current references. Alternatively, select them and use the REFRESH (O) button.", MsgBoxStyle.Exclamation)
-                    FileRepeatedError = True
-                    Continue For
-                End If
 
                 ' If file is a Word document, add its words to the counting system and its filepath to the list box
                 If DocFileExts.Contains(FileExt) Then
@@ -1128,37 +1114,17 @@ Public Class Form1
                         ' Get filepath
                         Dim R_FilePath As String = FileRdr.ReadLine
 
-                        ' If file path is nil, skip it
-                        If String.IsNullOrWhiteSpace(R_FilePath) Then
-                            Continue While
+                        ' Validate file
+                        Dim R_ValidationResult As Integer = Settings.ValidateReference(R_FilePath, NoErrorsSoFar)
+
+                        ' Skip files with errors
+                        If ValidationResult <> 0 Then
+                            NoErrorsSoFar = NoErrorsSoFar OrElse ValidationResult > 1 ' One way flag that changes iff. ValidationResult isn't 0 or 1
+                            Continue For
                         End If
 
-                        ' If file path isn't valid, display the appropriate error message
-                        If Dir(R_FilePath) = "" And Not FileNotExistError Then
-                            FileNotExistError = True
-                            MsgBox("One or more of the files you specified in the reference list(s) does not exist. Please only use files that exist as references.", MsgBoxStyle.Exclamation)
-                            Continue While
-                        End If
-
-                        ' Get extension
-                        Dim R_FileExt As String = R_FilePath.Substring(R_FilePath.LastIndexOf("."))
-
-                        ' If extension isn't compatible, display the appropriate error message
-                        If Not DocFileExts.Contains(R_FileExt) Then
-
-                            ' Avoid recursive references (file lists that reference other file lists) - this capability isn't supported
-                            If PlainTextFileExts.Contains(R_FileExt) Then
-                                MsgBox("One or more of the files you specified in the reference list(s) is another list of references. ContexType does not have support for this capability. These files will be ignored.", MsgBoxStyle.Exclamation)
-                            Else
-                                MsgBox("One or more of the files you specified in the reference list(s) is not an acceptable type. Please only use plain text files (" & TxtStr & ") and Microsoft Word documents (" & DocStr & ").", MsgBoxStyle.Exclamation)
-                            End If
-                        Else
-
-                            ' If the file is a Word document, add it to the reference list
-                            AddReference(R_FilePath)
-
-                        End If
-
+                        ' Add the file (that by this point must be a Word document - validateResults() checks for recursive referencing) to the reference list
+                        AddReference(R_FilePath)
 
                     End While
 
@@ -3049,6 +3015,71 @@ Public Class Settings
 
     End Function
 
+    ' Validate reference files
+    Shared Function ValidateReference(ByVal R_FilePath As String, ByVal DisplayMsgBoxes As Boolean) As Integer
+
+        ' This function returns an error code based on what about the reference is invalid (if anything)
+        ' Error code guide
+        '   0 - File path is VALID
+        '   1 - File path is null
+        '   2 - File does not exist
+        '   3 - Invalid file extension
+        '   4 - Referencing a reference list (recursive referencing)
+        '   5 - File is already referenced
+
+        ' Null files are invalid
+        If String.IsNullOrWhiteSpace(R_FilePath) Then
+            Return 1
+        End If
+
+        ' If file path isn't valid, display the appropriate error message
+        If Not IO.File.Exists(R_FilePath) Then
+
+            If DisplayMsgBoxes Then
+                MsgBox("One or more of the files you specified for referencing does not exist. Please only use files that exist as references.", MsgBoxStyle.Exclamation)
+            End If
+
+            Return 2
+        End If
+
+        ' Get extension
+        Dim R_FileExt As String = R_FilePath.Substring(R_FilePath.LastIndexOf("."))
+
+        ' If extension isn't compatible, the file is invalid
+        If Not Form1.DocFileExts.Contains(R_FileExt) Then
+
+            ' Avoid recursive references (file lists that reference other file lists) - this capability isn't supported
+            If Form1.PlainTextFileExts.Contains(R_FileExt) Then
+
+                If DisplayMsgBoxes Then
+                    MsgBox("One or more of the files you specified in the reference list(s) is another list of references. ContexType does not have support for this capability. These files will be ignored.", MsgBoxStyle.Exclamation)
+                End If
+
+                Return 4
+            Else
+
+                If DisplayMsgBoxes Then
+                    MsgBox("One or more of the files you specified for referencing is not an acceptable type. Please only use plain text files (" & String.Join(", ", Form1.PlainTextFileExts) & ") and Microsoft Word documents (" & String.Join(", ", Form1.DocFileExts) & ").", MsgBoxStyle.Exclamation)
+                End If
+
+                Return 3
+            End If
+
+        ElseIf Form1.EntirePathFileList.Contains(R_FilePath) Then
+
+                If DisplayMsgBoxes Then
+                MsgBox("One or more of the files you specified for referencing is referenced multiple times. Please remove the current references. Alternatively, select them and use the REFRESH (O) button.", MsgBoxStyle.Exclamation)
+                End If
+
+                Return 5
+
+        End If
+
+        ' File is valid
+        Return 0
+
+    End Function
+
     ' Get references
     Shared Function QueryReferences() As Integer
 
@@ -3076,7 +3107,7 @@ Public Class Settings
                     Dim Line As String = Reader.ReadLine
                     Dim LineExt As String = Line.Substring(Line.LastIndexOf("."))
 
-                    If Not String.IsNullOrWhiteSpace(Dir(Line)) And (Form1.DocFileExts.Contains(LineExt) Or Form1.PlainTextFileExts.Contains(LineExt)) Then
+                    If Settings.ValidateReference(Line, False) = 0 Then
                         Form1.AddReference(Line)
                     End If
                 Catch
