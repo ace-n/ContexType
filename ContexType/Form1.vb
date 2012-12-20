@@ -34,7 +34,7 @@ Public Class Form1
 
     ' ----- Google project info - used in autoupdate -----
     ' Current version (MUST BE AN INTEGER)
-    Public Version As Integer = 31
+    Public Version As Integer = 32
 
     ' Latest version path
     Public VersionURL As String = "http://contextype.googlecode.com/svn/latestversion.txt"
@@ -504,7 +504,7 @@ Public Class Form1
         While True
 
             ' Reduce processor strain
-            'Throttle(False)
+            Throttle(False)
 
             ' Skip if no active word doc
             If Not GetActiveWindowTitle(TitleLength).Contains("Microsoft Word") Then
@@ -530,7 +530,7 @@ Public Class Form1
             ' --- Everything below here only occurs if the word document has changed ---
 
             ' Wait for a bit (to prevent VB going too fast and causing errors)
-            Sleep(150)
+            Throttle(True)
 
             ' Update HWND
             PastDocumentHWND = CurDocumentHWND
@@ -1086,11 +1086,11 @@ Public Class Form1
                 Dim FilePath As String = CStr(RefList.GetValue(i))
 
                 ' Validate file
-                Dim ValidationResult As Integer = Settings.ValidateReference(FilePath, True)
+                Dim ValidationResult As Integer = Settings.ValidateReference(FilePath, True, True)
 
                 ' Skip files with errors
                 If ValidationResult <> 0 Then
-                    NoErrorsSoFar = NoErrorsSoFar OrElse ValidationResult > 1 ' One way flag that changes iff. ValidationResult isn't 0 or 1
+                    NoErrorsSoFar = NoErrorsSoFar AndAlso ValidationResult < 2 ' One way flag that changes iff. ValidationResult isn't 0 or 1
                     Continue For
                 End If
 
@@ -1105,6 +1105,9 @@ Public Class Form1
                 ' If file is a text file, attempt to add each of its filepaths
                 If PlainTextFileExts.Contains(FileExt) Then
 
+                    ' Error bolean
+                    Dim R_NoErrorsSoFar As Boolean = True
+
                     ' Get file text
                     Dim FileRdr As New IO.StreamReader(FilePath)
 
@@ -1115,11 +1118,11 @@ Public Class Form1
                         Dim R_FilePath As String = FileRdr.ReadLine
 
                         ' Validate file
-                        Dim R_ValidationResult As Integer = Settings.ValidateReference(R_FilePath, NoErrorsSoFar)
+                        Dim R_ValidationResult As Integer = Settings.ValidateReference(R_FilePath, R_NoErrorsSoFar, False)
 
                         ' Skip files with errors
-                        If ValidationResult <> 0 Then
-                            NoErrorsSoFar = NoErrorsSoFar OrElse ValidationResult > 1 ' One way flag that changes iff. ValidationResult isn't 0 or 1
+                        If R_ValidationResult <> 0 Then
+                            R_NoErrorsSoFar = R_NoErrorsSoFar AndAlso R_ValidationResult < 2 ' One way flag that changes iff. ValidationResult isn't 0 or 1
                             Continue For
                         End If
 
@@ -3016,7 +3019,7 @@ Public Class Settings
     End Function
 
     ' Validate reference files
-    Shared Function ValidateReference(ByVal R_FilePath As String, ByVal DisplayMsgBoxes As Boolean) As Integer
+    Shared Function ValidateReference(ByVal R_FilePath As String, ByVal DisplayMsgBoxes As Boolean, ByVal AllowTextFiles As Boolean) As Integer
 
         ' This function returns an error code based on what about the reference is invalid (if anything)
         ' Error code guide
@@ -3049,14 +3052,14 @@ Public Class Settings
         If Not Form1.DocFileExts.Contains(R_FileExt) Then
 
             ' Avoid recursive references (file lists that reference other file lists) - this capability isn't supported
-            If Form1.PlainTextFileExts.Contains(R_FileExt) Then
+            If Form1.PlainTextFileExts.Contains(R_FileExt) And Not AllowTextFiles Then
 
                 If DisplayMsgBoxes Then
                     MsgBox("One or more of the files you specified in the reference list(s) is another list of references. ContexType does not have support for this capability. These files will be ignored.", MsgBoxStyle.Exclamation)
                 End If
 
                 Return 4
-            Else
+            ElseIf Not Form1.PlainTextFileExts.Contains(R_FileExt) Then
 
                 If DisplayMsgBoxes Then
                     MsgBox("One or more of the files you specified for referencing is not an acceptable type. Please only use plain text files (" & String.Join(", ", Form1.PlainTextFileExts) & ") and Microsoft Word documents (" & String.Join(", ", Form1.DocFileExts) & ").", MsgBoxStyle.Exclamation)
@@ -3067,11 +3070,11 @@ Public Class Settings
 
         ElseIf Form1.EntirePathFileList.Contains(R_FilePath) Then
 
-                If DisplayMsgBoxes Then
+            If DisplayMsgBoxes Then
                 MsgBox("One or more of the files you specified for referencing is referenced multiple times. Please remove the current references. Alternatively, select them and use the REFRESH (O) button.", MsgBoxStyle.Exclamation)
-                End If
+            End If
 
-                Return 5
+            Return 5
 
         End If
 
@@ -3107,7 +3110,7 @@ Public Class Settings
                     Dim Line As String = Reader.ReadLine
                     Dim LineExt As String = Line.Substring(Line.LastIndexOf("."))
 
-                    If Settings.ValidateReference(Line, False) = 0 Then
+                    If Settings.ValidateReference(Line, False, False) = 0 Then
                         Form1.AddReference(Line)
                     End If
                 Catch
