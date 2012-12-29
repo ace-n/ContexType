@@ -34,7 +34,7 @@ Public Class Form1
 
     ' ----- Google project info - used in autoupdate -----
     ' Current version (MUST BE AN INTEGER)
-    Public Version As Integer = 32
+    Public Version As Integer = 33
 
     ' Latest version path
     Public VersionURL As String = "http://contextype.googlecode.com/svn/latestversion.txt"
@@ -867,6 +867,8 @@ Public Class Form1
     ' Add reference button
     Private Sub btn_AddRef_Click(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles btn_AddRef.Click
 
+        Dim NoErrorsSoFar As Boolean = True
+
         ' Display dialog
         fileopener.ShowDialog()
 
@@ -874,9 +876,14 @@ Public Class Form1
         If fileopener.FileNames.Count > 0 Then
             For Each File In fileopener.FileNames
 
+                ' Get file extension
+                Dim FileExt As String = GetFileExt(File)
+
                 ' If file is a word document (.doc, .docx), use the add reference method
-                If (File.EndsWith(".doc") Or File.EndsWith(".docx")) And Dir(File) <> "" Then
+                If Settings.ValidateReference(File, NoErrorsSoFar, False) = 0 Then
                     AddReference(File)
+                Else
+                    NoErrorsSoFar = True
                 End If
 
             Next
@@ -2221,6 +2228,11 @@ Public Class Form1
 
 #End Region
 
+    ' Obtains file extensions from filepaths
+    Public Shared Function GetFileExt(ByVal FilePath As String) As String
+        Return FilePath.Substring(Math.Max(FilePath.LastIndexOf("."), 0))
+    End Function
+
 End Class
 
 ' String manipulation
@@ -3046,7 +3058,7 @@ Public Class Settings
         End If
 
         ' Get extension
-        Dim R_FileExt As String = R_FilePath.Substring(R_FilePath.LastIndexOf("."))
+        Dim R_FileExt As String = Form1.GetFileExt(R_FilePath)
 
         ' If extension isn't compatible, the file is invalid
         If Not Form1.DocFileExts.Contains(R_FileExt) Then
