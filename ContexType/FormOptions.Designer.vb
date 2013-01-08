@@ -71,10 +71,6 @@ Partial Class FormOptions
         Me.rbn_Upd8_None = New System.Windows.Forms.RadioButton()
         Me.rbn_Upd8_Ask = New System.Windows.Forms.RadioButton()
         Me.rbn_Upd8_Auto = New System.Windows.Forms.RadioButton()
-        Me.GroupBox7 = New System.Windows.Forms.GroupBox()
-        Me.rbnMDSCumulative = New System.Windows.Forms.RadioButton()
-        Me.rbnMDSNormal = New System.Windows.Forms.RadioButton()
-        Me.rbnMDSTries = New System.Windows.Forms.RadioButton()
         Me.GroupBox2.SuspendLayout()
         Me.GroupBox1.SuspendLayout()
         CType(Me.tbrCPUConsumption, System.ComponentModel.ISupportInitialize).BeginInit()
@@ -82,7 +78,6 @@ Partial Class FormOptions
         Me.GroupBox4.SuspendLayout()
         Me.GroupBox5.SuspendLayout()
         Me.GroupBox6.SuspendLayout()
-        Me.GroupBox7.SuspendLayout()
         Me.SuspendLayout()
         '
         'GroupBox2
@@ -635,60 +630,11 @@ Partial Class FormOptions
         Me.rbn_Upd8_Auto.Text = "Automatic"
         Me.rbn_Upd8_Auto.UseVisualStyleBackColor = True
         '
-        'GroupBox7
-        '
-        Me.GroupBox7.Controls.Add(Me.rbnMDSCumulative)
-        Me.GroupBox7.Controls.Add(Me.rbnMDSNormal)
-        Me.GroupBox7.Controls.Add(Me.rbnMDSTries)
-        Me.GroupBox7.Location = New System.Drawing.Point(665, 299)
-        Me.GroupBox7.Name = "GroupBox7"
-        Me.GroupBox7.Size = New System.Drawing.Size(161, 111)
-        Me.GroupBox7.TabIndex = 35
-        Me.GroupBox7.TabStop = False
-        Me.GroupBox7.Text = "Main Doc Options"
-        '
-        'rbnMDSCumulative
-        '
-        Me.rbnMDSCumulative.AutoSize = True
-        Me.rbnMDSCumulative.Location = New System.Drawing.Point(8, 79)
-        Me.rbnMDSCumulative.Margin = New System.Windows.Forms.Padding(4)
-        Me.rbnMDSCumulative.Name = "rbnMDSCumulative"
-        Me.rbnMDSCumulative.Size = New System.Drawing.Size(137, 21)
-        Me.rbnMDSCumulative.TabIndex = 38
-        Me.rbnMDSCumulative.Text = "Cumulative (WIP)"
-        Me.rbnMDSCumulative.UseVisualStyleBackColor = True
-        Me.rbnMDSCumulative.Visible = False
-        '
-        'rbnMDSNormal
-        '
-        Me.rbnMDSNormal.AutoSize = True
-        Me.rbnMDSNormal.Checked = True
-        Me.rbnMDSNormal.Location = New System.Drawing.Point(8, 22)
-        Me.rbnMDSNormal.Margin = New System.Windows.Forms.Padding(4)
-        Me.rbnMDSNormal.Name = "rbnMDSNormal"
-        Me.rbnMDSNormal.Size = New System.Drawing.Size(74, 21)
-        Me.rbnMDSNormal.TabIndex = 36
-        Me.rbnMDSNormal.TabStop = True
-        Me.rbnMDSNormal.Text = "Normal"
-        Me.rbnMDSNormal.UseVisualStyleBackColor = True
-        '
-        'rbnMDSTries
-        '
-        Me.rbnMDSTries.AutoSize = True
-        Me.rbnMDSTries.Location = New System.Drawing.Point(8, 51)
-        Me.rbnMDSTries.Margin = New System.Windows.Forms.Padding(4)
-        Me.rbnMDSTries.Name = "rbnMDSTries"
-        Me.rbnMDSTries.Size = New System.Drawing.Size(105, 21)
-        Me.rbnMDSTries.TabIndex = 37
-        Me.rbnMDSTries.Text = "Trie Method"
-        Me.rbnMDSTries.UseVisualStyleBackColor = True
-        '
         'FormOptions
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(8.0!, 16.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
         Me.ClientSize = New System.Drawing.Size(1087, 441)
-        Me.Controls.Add(Me.GroupBox7)
         Me.Controls.Add(Me.GroupBox6)
         Me.Controls.Add(Me.GroupBox5)
         Me.Controls.Add(Me.GroupBox4)
@@ -715,8 +661,6 @@ Partial Class FormOptions
         Me.GroupBox5.PerformLayout()
         Me.GroupBox6.ResumeLayout(False)
         Me.GroupBox6.PerformLayout()
-        Me.GroupBox7.ResumeLayout(False)
-        Me.GroupBox7.PerformLayout()
         Me.ResumeLayout(False)
         Me.PerformLayout()
 
@@ -766,10 +710,6 @@ Partial Class FormOptions
     Friend WithEvents cbxNumSelection_UseNumpad As System.Windows.Forms.CheckBox
     Friend WithEvents txtTrieUpdateInterval As System.Windows.Forms.TextBox
     Friend WithEvents Label7 As System.Windows.Forms.Label
-    Friend WithEvents GroupBox7 As System.Windows.Forms.GroupBox
-    Friend WithEvents rbnMDSCumulative As System.Windows.Forms.RadioButton
-    Friend WithEvents rbnMDSNormal As System.Windows.Forms.RadioButton
-    Friend WithEvents rbnMDSTries As System.Windows.Forms.RadioButton
     Friend WithEvents cbxCopyPaste As System.Windows.Forms.CheckBox
     Friend WithEvents lblCPUConsumption As System.Windows.Forms.Label
     Friend WithEvents tbrCPUConsumption As System.Windows.Forms.TrackBar

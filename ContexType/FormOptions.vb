@@ -108,10 +108,10 @@
     End Sub
 
     ' Main document search method
-    Public Sub H_MD_UseTries(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles rbnMDSTries.MouseEnter
+    Public Sub H_MD_UseTries(ByVal sender As System.Object, ByVal e As System.EventArgs)
         txt_hints.Text = "If checked, active document suggestions are found using tries. The word bank doesn't update instantly, but the recommendation search is fast for large documents."
     End Sub
-    Public Sub H_MD_Normal(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles rbnMDSNormal.MouseEnter
+    Public Sub H_MD_Normal(ByVal sender As System.Object, ByVal e As System.EventArgs)
         txt_hints.Text = "If checked, active document suggestions are found using a standard method. The word bank updates instantly, but the recommendation search is slow for large documents."
     End Sub
     Public Sub H_TrieInterval(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles txtTrieUpdateInterval.MouseEnter
@@ -460,21 +460,6 @@
         Catch
             txtTrieUpdateInterval.BackColor = Color.Red
         End Try
-    End Sub
-
-    Private Sub rbnMDSTries_CheckedChanged(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles rbnMDSTries.CheckedChanged
-        SettingsChanged = True
-        Label7.Visible = rbnMDSTries.Checked
-        txtTrieUpdateInterval.Visible = rbnMDSTries.Checked
-        If rbnMDSTries.Checked Then
-            Form1.O_MDSMethodIdx = 1
-        End If
-    End Sub
-    Private Sub rbnMDSNormal_CheckedChanged(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles rbnMDSNormal.CheckedChanged
-        SettingsChanged = True
-        If rbnMDSNormal.Checked Then
-            Form1.O_MDSMethodIdx = 0
-        End If
     End Sub
 
     Private Sub cbxCopyPaste_CheckedChanged() Handles cbxCopyPaste.CheckedChanged

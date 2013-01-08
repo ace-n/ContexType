@@ -34,7 +34,7 @@ Public Class Form1
 
     ' ----- Google project info - used in autoupdate -----
     ' Current version (MUST BE AN INTEGER)
-    Public Version As Integer = 33
+    Public Version As Integer = 34
 
     ' Latest version path
     Public VersionURL As String = "http://contextype.googlecode.com/svn/latestversion.txt"
@@ -87,7 +87,6 @@ Public Class Form1
     Public O_S_None As Boolean
 
     ' Main document sorting data
-    Public O_MDSMethodIdx As Integer = 0
     Public O_MDSTrieSrcInterval As Integer = 0
 
     ' Customizable key constants [5]
@@ -1370,9 +1369,7 @@ Public Class Form1
                     WordTextPrev = WordText
                     WordCurrent = " "
 
-                    If O_MDSMethodIdx <> 2 Then
-                        SortedRecommendations.Clear()
-                    End If
+                    SortedRecommendations.Clear()
 
                     TextWorker.ReportProgress(0)    ' Trigger an outside-of-worker update
 
@@ -1478,9 +1475,7 @@ Public Class Form1
                                 Hopper.Visible = False
                                 WordTextPrev = WordText
 
-                                If O_MDSMethodIdx <> 2 Then
-                                    SortedRecommendations.Clear()
-                                End If
+                                SortedRecommendations.Clear()
 
                                 TextWorker.ReportProgress(0)    ' Trigger an outside-of-worker update
 
@@ -1557,456 +1552,326 @@ Public Class Form1
                 ' Find list of recommended words
                 Dim RecommendationsUnsorted As New List(Of Recommendation)
 
-                If O_MDSMethodIdx = 0 Then ' Normal main document search
-
-                    ' Search known words for recommendations (current document)
-                    For i = 0 To RecsNew.Count - 1
-
-                        ' Get current word
-                        Dim KnownWord As String = RecsNew.Item(i).Text
-
-                        ' If current word fits the known one, add it to the recommendations list
-                        If KnownWord.StartsWith(WordCurrent) And KnownWord.Length >= MinLength And RecsNew.Item(i).Number >= MinCnt Then
-                            If KnownWord.Replace(" ", "").Length <> WordCurrent.Length Then
-
-                                ' If necessary, removed already typed component from word suggestion
-                                If O_EntireWord Then
-                                    RecommendationsUnsorted.Add(New Recommendation(KnownWord.Replace(" ", ""), RecsNew.Item(i).Number))
-                                Else
-                                    RecommendationsUnsorted.Add(New Recommendation(KnownWord.Substring(WordCurrent.Length).Replace(" ", ""), RecsNew.Item(i).Number))
-                                End If
-
-                            End If
-                        End If
-                    Next
-
-                ElseIf O_MDSMethodIdx = 1 Then
-
-                    ' Use trie search
+                ' Use trie search
                     RecommendationsUnsorted = Trie.SearchTrie(MainDocTrie, WordCurrent, MinCnt, MinLength, O_IgnoreCase)
 
-                Else
+                    ' Get complete word list (for word distance - only if necessary)
+                    Dim WordListIndices As New List(Of Integer)
+                    Dim CurWordIndex As Integer ' Index of current typing word in word list
 
-                    MsgBox("Cumulative search is commented out because it doesn't work!")
+                    If O_S_Dist And Not String.IsNullOrWhiteSpace(WordCurrent) Then
 
-                    '' Use cumulative sorting
+                        ' Get current word index (index of word that is being modified)
+                        '   This prevents words that are the same as the current one that occur earlier from being marked as changed
+                        Dim CurStrIndex As Integer = WordApp.Selection.Range.Start
 
-                    '' If current word is only one character long and the first character <> the cumulative's first, do some updating/data recording
-                    'If WordCurrent.Length > 0 Then
+                        ' Find current word index
+                        Dim SearchIndex As Integer = 0
 
-                    '    If MainDocCumulativeActiveWord.First <> WordCurrent.First Or String.IsNullOrWhiteSpace(MainDocCumulativeActiveWord) Then
+                        ' This links the index of the item in WordsListNoCounting to the location in the main string
+                        ' Number of target word skipped to reach destination
+                        Dim SkipCount As Integer = 0
+                        Dim MustExit As Boolean = False
+                        While WordTextSpaces.IndexOf(WordCurrent, SearchIndex + WordCurrent.Length) <> -1
 
-                    '        ' Update stored cumulative word
-                    '        MainDocCumulativeActiveWord = WordCurrent
+                            Try
 
-                    '        ' Clear the index list
-                    '        MainDocCumulativeIdxList.Clear()
+                                ' Check if typing index is within current word
+                                If CurStrIndex >= SearchIndex - 1 And CurStrIndex <= SearchIndex + WordCurrent.Length + 1 Then
+                                    CurWordIndex = SearchIndex ' Update current word index (bugfix on 10/6/2012)
+                                    Exit While
+                                End If
 
-                    '        ' --- Copied from normal sorting ---
-                    '        ' Search known words for recommendations (current document)
-                    '        For i = 0 To WordsNew.Count - 1
+                                ' Search for next occurrence of the given word
+                                SearchIndex = WordTextSpaces.IndexOf(" " & WordCurrent & " ", SearchIndex + 1)
 
-                    '            ' Get current word
-                    '            Dim KnownWord As String = WordsNew.Item(i)
+                                ' Add 1 to the current word count (number of occurences of the current word skipped to arrive at destination)
+                                SkipCount += 1
 
-                    '            ' If current word fits the known one, add it to the recommendations list
-                    '            If KnownWord.StartsWith(WordCurrent) And KnownWord.Length >= MinLength And CountNew.Item(i) >= MinCnt Then
-                    '                If KnownWord.Replace(" ", "").Length <> WordCurrent.Length Then
+                                ' If index is negative (i.e. word couldn't be found close enough to the active workspace in the document),
+                                '   go around
+                                If SearchIndex = -1 Then
+                                    WordTextPrev = WordText
+                                    TotalWordsOld = TotalWordsNew
 
-                    '                    ' Add entire recommendation (required)
-                    '                    RecommendationsUnsorted.Add(New Recommendation(KnownWord.Replace(" ", ""), CountNew.Item(i)))
+                                    ' --- Update old recommendations list ---
+                                    RecsOld.Clear()
 
-                    '                End If
-                    '            End If
-                    '        Next
 
-                    '    Else
+                                    RecsOld.AddRange(RecsNew)
 
-                    '        Try
 
-                    '            ' Sort through old sorted recommendations and isolate valid ones
-                    '            '   Note: this refers to items in the sorted recommendations list through their indexes
+                                    MustExit = True
 
-                    '            ' Remove entries from the end of the cumulative index list, if necessary
-                    '            '   This is to make it have a length equal to( WordCurrent.Length-1)
-                    '            While WordCurrent.Length - 1 <= MainDocCumulativeIdxList.Count And MainDocCumulativeIdxList.Count <> 0
-                    '                MainDocCumulativeIdxList.RemoveAt(MainDocCumulativeIdxList.Count - 1)
-                    '            End While
+                                    Exit While
+                                End If
 
-                    '            ' Populate the cumulative index list
-                    '            While WordCurrent.Length - 1 > MainDocCumulativeIdxList.Count
+                            Catch
+                            End Try
 
-                    '                Dim ValidRecs As New List(Of Integer)
-
-                    '                Dim PartCurrent As String = WordCurrent.Substring(0, MainDocCumulativeIdxList.Count + 2)
-
-                    '                ' Get valid suggestions
-                    '                If MainDocCumulativeIdxList.Count = 0 Then
-
-                    '                    ' First layer of numerically indexed recommendations
-                    '                    For i = 0 To SortedRecommendations.Count - 1
-
-                    '                        Dim CI As String = SortedRecommendations.Item(i)
-
-                    '                        ' Check for equivalence
-                    '                        If O_IgnoreCase Then
-                    '                            CI = CI.ToLower
-                    '                            If CI.StartsWith(PartCurrent.ToLower) Then
-                    '                                ValidRecs.Add(i)
-                    '                            End If
-                    '                        Else
-                    '                            If CI.StartsWith(PartCurrent) Then
-                    '                                ValidRecs.Add(i)
-                    '                            End If
-                    '                        End If
-                    '                    Next
-
-                    '                    MainDocCumulativeIdxList.Add(ValidRecs)
-                    '                Else
-
-                    '                    ' Second and onward recommendation layers (that depend on previous index layers)
-                    '                    ValidRecs = MainDocCumulativeIdxList.Item(MainDocCumulativeIdxList.Count - 1)
-                    '                    Dim NextValidRecs As New List(Of Integer)
-
-                    '                    ' Sort through previous recommendations and mark the valid ones
-                    '                    For i = 0 To ValidRecs.Count - 1
-
-                    '                        Dim CIdx As Integer = ValidRecs.Item(i)
-                    '                        Dim CRec As String = SortedRecommendations.Item(CIdx)
-
-                    '                        ' Check for equivalence
-                    '                        If O_IgnoreCase Then
-                    '                            CRec = CRec.ToLower
-                    '                            If CRec.StartsWith(PartCurrent.ToLower) Then
-                    '                                NextValidRecs.Add(i)
-                    '                            End If
-                    '                        Else
-                    '                            If CRec.StartsWith(PartCurrent) Then
-                    '                                NextValidRecs.Add(i)
-                    '                            End If
-                    '                        End If
-
-                    '                    Next
-
-                    '                    ' Add current recommendations list to main cumulative one
-                    '                    If PartCurrent.Length - 2 > MainDocCumulativeIdxList.Count - 1 Then
-                    '                        MainDocCumulativeIdxList.Add(NextValidRecs)
-                    '                    Else
-                    '                        MainDocCumulativeIdxList.Item(PartCurrent.Length - 2) = NextValidRecs
-                    '                    End If
-
-                    '                End If
-
-                    '            End While
-
-                    '            ' Recommendations are finished (if the current word is longer than 1 character)
-                    '            If WordCurrent.Length > 1 Then
-
-                    '                ' Report update
-                    '                TextWorker.ReportProgress(1)
-
-                    '                ' Update data
-                    '                TotalWordsOld = TotalWordsNew
-                    '                WordsOld.Clear()
-                    '                
-
-                    '                WordsOld.AddRange(WordsNew)
-                    '                
-
-                    '                ' Update stored cumulative word
-                    '                MainDocCumulativeActiveWord = WordCurrent
-
-                    '                Continue While
-                    '            End If
-
-                    '        Catch
-                    '        End Try
-
-                    '    End If
-                    'End If
-
-                End If
-
-                ' Get complete word list (for word distance - only if necessary)
-                Dim WordListIndices As New List(Of Integer)
-                Dim CurWordIndex As Integer ' Index of current typing word in word list
-
-                If O_S_Dist And Not String.IsNullOrWhiteSpace(WordCurrent) Then
-
-                    ' Get current word index (index of word that is being modified)
-                    '   This prevents words that are the same as the current one that occur earlier from being marked as changed
-                    Dim CurStrIndex As Integer = WordApp.Selection.Range.Start
-
-                    ' Find current word index
-                    Dim SearchIndex As Integer = 0
-
-                    ' This links the index of the item in WordsListNoCounting to the location in the main string
-                    ' Number of target word skipped to reach destination
-                    Dim SkipCount As Integer = 0
-                    Dim MustExit As Boolean = False
-                    While WordTextSpaces.IndexOf(WordCurrent, SearchIndex + WordCurrent.Length) <> -1
-
-                        Try
-
-                            ' Check if typing index is within current word
-                            If CurStrIndex >= SearchIndex - 1 And CurStrIndex <= SearchIndex + WordCurrent.Length + 1 Then
-                                CurWordIndex = SearchIndex ' Update current word index (bugfix on 10/6/2012)
+                            If MustExit Then
                                 Exit While
                             End If
 
-                            ' Search for next occurrence of the given word
-                            SearchIndex = WordTextSpaces.IndexOf(" " & WordCurrent & " ", SearchIndex + 1)
+                        End While
 
-                            ' Add 1 to the current word count (number of occurences of the current word skipped to arrive at destination)
-                            SkipCount += 1
-
-                            ' If index is negative (i.e. word couldn't be found close enough to the active workspace in the document),
-                            '   go around
-                            If SearchIndex = -1 Then
-                                WordTextPrev = WordText
-                                TotalWordsOld = TotalWordsNew
-
-                                ' --- Update old recommendations list ---
-                                RecsOld.Clear()
-
-
-                                RecsOld.AddRange(RecsNew)
-
-
-                                MustExit = True
-
-                                Exit While
-                            End If
-
-                        Catch
-                        End Try
-
+                        ' Go around again
                         If MustExit Then
-                            Exit While
+                            Continue While
                         End If
 
-                    End While
+                        ' Band aid exception handler
+                        If String.IsNullOrWhiteSpace(WordCurrent) Then
 
-                    ' Go around again
-                    If MustExit Then
-                        Continue While
+                            WordTextPrev = WordText
+                            TotalWordsOld = TotalWordsNew
+
+                            ' --- Update old recommendations list ---
+                            RecsOld.Clear()
+
+
+                            RecsOld.AddRange(RecsNew)
+
+
+                            Continue While
+
+                        End If
+
+                        ' If skip count is 0, just use first word (because no occurrences of the word were skipped)
+                        If SkipCount = 0 Then
+                            CurWordIndex = Array.IndexOf(WordListNoCounting, WordCurrent)
+                        Else
+
+                            ' Otherwise, use skip counting procedure
+                            '   Convert skip count into actual word count (if skip count isn't 0)
+                            SearchIndex = WordTextSpaces.IndexOf(WordCurrent)
+                            For i = 0 To WordListNoCounting.Count - 1
+
+                                ' If current word is a match, subtract from skip count
+                                If CStr(WordListNoCounting.GetValue(i)) = WordCurrent Then
+                                    SkipCount -= 1
+
+                                    ' Exit loop
+                                    If SkipCount = 0 Then
+                                        CurWordIndex = i
+                                        Exit For
+                                    End If
+
+                                End If
+
+                            Next
+                        End If
+
+                        ' If CurWordIndex is negative, continue the loop
+                        If CurWordIndex < 0 Or CurWordIndex > WordListNoCounting.Count - 1 Then
+                            WordTextPrev = WordText
+                            TotalWordsOld = TotalWordsNew
+
+                            ' --- Update old recommendations list ---
+                            RecsOld.Clear()
+
+
+                            RecsOld.AddRange(RecsNew)
+
+
+                            Continue While
+
+                        End If
+
                     End If
 
-                    ' Band aid exception handler
-                    If String.IsNullOrWhiteSpace(WordCurrent) Then
+                    ' ------------------------------ Reference document recommendations ------------------------------
 
-                        WordTextPrev = WordText
-                        TotalWordsOld = TotalWordsNew
+                    ' Get combined counts of reference words across all reference documents
+                    Dim RecsUnsortedRef As New List(Of Recommendation)
+                    Dim CountsUnsortedRef As New List(Of Double)
 
-                        ' --- Update old recommendations list ---
-                        RecsOld.Clear()
+                    If ReferenceTries.Count > 0 Then
 
+                        ' Parse through the reference documents (each of which is stored in trie format)
+                        For i = 0 To ReferenceTries.Count - 1
 
-                        RecsOld.AddRange(RecsNew)
+                            ' Recursively identify any matching tries
+                            RecsUnsortedRef.AddRange(Trie.SearchTrie(ReferenceTries.Item(i), WordCurrent, MinCnt, MinLength, O_IgnoreCase))
 
+                        Next
 
-                        Continue While
+                        ' Create/populate the unsorted counts list
+                        If O_S_Length Then
+                            For i = 0 To RecsUnsortedRef.Count - 1
+                                CountsUnsortedRef.Add(RecsUnsortedRef.Item(i).Text.Length)
+                            Next
+                        Else
+                            For i = 0 To RecsUnsortedRef.Count - 1
+                                CountsUnsortedRef.Add(RecsUnsortedRef.Item(i).Number)
+                            Next
+                        End If
 
                     End If
 
-                    ' If skip count is 0, just use first word (because no occurrences of the word were skipped)
-                    If SkipCount = 0 Then
-                        CurWordIndex = Array.IndexOf(WordListNoCounting, WordCurrent)
-                    Else
+                    ' ------------------- Total recommendations (current and reference documents) -------------------
 
-                        ' Otherwise, use skip counting procedure
-                        '   Convert skip count into actual word count (if skip count isn't 0)
-                        SearchIndex = WordTextSpaces.IndexOf(WordCurrent)
-                        For i = 0 To WordListNoCounting.Count - 1
+                    ' If recommendations are sorted based on population, combine the current and reference to-be-sorted lists
+                    If O_S_Popln And ReferenceTries.Count > 0 Then
 
-                            ' If current word is a match, subtract from skip count
-                            If CStr(WordListNoCounting.GetValue(i)) = WordCurrent Then
-                                SkipCount -= 1
+                        ' Get the words in recommendation format
+                        Dim AllRecs As New List(Of Recommendation)
+                        AllRecs.AddRange(RecommendationsUnsorted)
 
-                                ' Exit loop
-                                If SkipCount = 0 Then
-                                    CurWordIndex = i
+                        If O_EntireWord Then
+                            For Each R As Recommendation In RecsUnsortedRef
+                                AllRecs.Add(New Recommendation(WordCurrent & R.Text, R.Number))
+                            Next
+                        Else
+                            AllRecs.AddRange(RecsUnsortedRef)
+                        End If
+
+
+                        ' Sort based on recommendation string
+                        Dim Comparer2 As New RecSortString
+                        AllRecs.Sort(Comparer2)
+
+                        ' Add recommendation populations together
+                        Dim Index As Integer = 0
+                        Dim RemoveIndex As Integer = -1
+
+                        While True
+
+                            ' Account for repeats
+                            For i = Index To AllRecs.Count - 1
+
+                                ' Check for repeats
+                                For j = i + 1 To AllRecs.Count - 1
+                                    If AllRecs.Item(i).Text = AllRecs.Item(j).Text Then
+                                        AllRecs.Item(i).Number += AllRecs.Item(j).Number
+                                        RemoveIndex = j
+                                        Exit For
+                                    End If
+                                Next
+
+                                ' If a repeat has occurred, pause searching for repeats
+                                If RemoveIndex <> -1 Then
                                     Exit For
                                 End If
 
-                            End If
-
-                        Next
-                    End If
-
-                    ' If CurWordIndex is negative, continue the loop
-                    If CurWordIndex < 0 Or CurWordIndex > WordListNoCounting.Count - 1 Then
-                        WordTextPrev = WordText
-                        TotalWordsOld = TotalWordsNew
-
-                        ' --- Update old recommendations list ---
-                        RecsOld.Clear()
-
-
-                        RecsOld.AddRange(RecsNew)
-
-
-                        Continue While
-
-                    End If
-
-                End If
-
-                ' ------------------------------ Reference document recommendations ------------------------------
-
-                ' Get combined counts of reference words across all reference documents
-                Dim RecsUnsortedRef As New List(Of Recommendation)
-                Dim CountsUnsortedRef As New List(Of Double)
-
-                If ReferenceTries.Count > 0 Then
-
-                    ' Parse through the reference documents (each of which is stored in trie format)
-                    For i = 0 To ReferenceTries.Count - 1
-
-                        ' Recursively identify any matching tries
-                        RecsUnsortedRef.AddRange(Trie.SearchTrie(ReferenceTries.Item(i), WordCurrent, MinCnt, MinLength, O_IgnoreCase))
-
-                    Next
-
-                    ' Create/populate the unsorted counts list
-                    If O_S_Length Then
-                        For i = 0 To RecsUnsortedRef.Count - 1
-                            CountsUnsortedRef.Add(RecsUnsortedRef.Item(i).Text.Length)
-                        Next
-                    Else
-                        For i = 0 To RecsUnsortedRef.Count - 1
-                            CountsUnsortedRef.Add(RecsUnsortedRef.Item(i).Number)
-                        Next
-                    End If
-
-                End If
-
-                ' ------------------- Total recommendations (current and reference documents) -------------------
-
-                ' If recommendations are sorted based on population, combine the current and reference to-be-sorted lists
-                If O_S_Popln And ReferenceTries.Count > 0 Then
-
-                    ' Get the words in recommendation format
-                    Dim AllRecs As New List(Of Recommendation)
-                    AllRecs.AddRange(RecommendationsUnsorted)
-
-                    If O_EntireWord Then
-                        For Each R As Recommendation In RecsUnsortedRef
-                            AllRecs.Add(New Recommendation(WordCurrent & R.Text, R.Number))
-                        Next
-                    Else
-                        AllRecs.AddRange(RecsUnsortedRef)
-                    End If
-
-
-                    ' Sort based on recommendation string
-                    Dim Comparer2 As New RecSortString
-                    AllRecs.Sort(Comparer2)
-
-                    ' Add recommendation populations together
-                    Dim Index As Integer = 0
-                    Dim RemoveIndex As Integer = -1
-
-                    While True
-
-                        ' Account for repeats
-                        For i = Index To AllRecs.Count - 1
-
-                            ' Check for repeats
-                            For j = i + 1 To AllRecs.Count - 1
-                                If AllRecs.Item(i).Text = AllRecs.Item(j).Text Then
-                                    AllRecs.Item(i).Number += AllRecs.Item(j).Number
-                                    RemoveIndex = j
-                                    Exit For
-                                End If
                             Next
 
-                            ' If a repeat has occurred, pause searching for repeats
+                            ' If a repeat has occurred, remove it from AllRecs
                             If RemoveIndex <> -1 Then
-                                Exit For
-                            End If
-
-                        Next
-
-                        ' If a repeat has occurred, remove it from AllRecs
-                        If RemoveIndex <> -1 Then
-                            If RemoveIndex <> 0 Then
-                                Index = RemoveIndex - 1
+                                If RemoveIndex <> 0 Then
+                                    Index = RemoveIndex - 1
+                                Else
+                                    Index = 0
+                                End If
+                                AllRecs.RemoveAt(RemoveIndex)
+                                RemoveIndex = -1
                             Else
-                                Index = 0
+                                ' If no repeats have occurred, this process is complete
+                                Exit While
                             End If
-                            AllRecs.RemoveAt(RemoveIndex)
-                            RemoveIndex = -1
-                        Else
-                            ' If no repeats have occurred, this process is complete
-                            Exit While
+
+                        End While
+
+                        ' Update main recommendations list (RecommendationsUnsorted)
+                        RecommendationsUnsorted.Clear()
+                        RecommendationsUnsorted.AddRange(AllRecs)
+
+                    End If
+
+                    ' Sort them according to the specified parameters (commonality, length, distance to reoccurence) - each is assigned an index of (count + length of word)
+
+                    ' Current document recommendations
+                    If Not O_S_None Then
+                        GradeRecs(RecommendationsUnsorted, CurWordIndex, WordListNoCounting.ToList)
+                        If Not O_S_Popln And ReferenceTries.Count > 0 Then ' If population mode is on, the recommendations from the references are included in the main recommendations list
+                            GradeRecs(RecsUnsortedRef, CurWordIndex, WordListNoCounting.ToList)
                         End If
 
-                    End While
+                        ' Sort unsorted recommendations lists
+                        Dim Comparer As New RecSort
+                        RecommendationsUnsorted.Sort(Comparer)
+                        RecsUnsortedRef.Sort(Comparer)
 
-                    ' Update main recommendations list (RecommendationsUnsorted)
-                    RecommendationsUnsorted.Clear()
-                    RecommendationsUnsorted.AddRange(AllRecs)
-
-                End If
-
-                ' Sort them according to the specified parameters (commonality, length, distance to reoccurence) - each is assigned an index of (count + length of word)
-
-                ' Current document recommendations
-                If Not O_S_None Then
-                    GradeRecs(RecommendationsUnsorted, CurWordIndex, WordListNoCounting.ToList)
-                    If Not O_S_Popln And ReferenceTries.Count > 0 Then ' If population mode is on, the recommendations from the references are included in the main recommendations list
-                        GradeRecs(RecsUnsortedRef, CurWordIndex, WordListNoCounting.ToList)
                     End If
 
-                    ' Sort unsorted recommendations lists
-                    Dim Comparer As New RecSort
-                    RecommendationsUnsorted.Sort(Comparer)
-                    RecsUnsortedRef.Sort(Comparer)
+                    SortedRecommendations.Clear()
+                    For Each R As Recommendation In RecommendationsUnsorted
 
-                End If
-
-                SortedRecommendations.Clear()
-                For Each R As Recommendation In RecommendationsUnsorted
-
-                    ' If recommendations exceed maximum recommendation count, don't bother adding more
-                    If SortedRecommendations.Count >= IdeaCountLimit And IdeaCountLimit > 0 Then
-                        Exit For
-                    End If
-
-                    ' Add recommendation if allowed
-                    SortedRecommendations.Add(R.Text)
-
-                Next
-
-                For Each R As Recommendation In RecsUnsortedRef
-
-                    ' Check for repeats
-                    Dim B As Boolean = True
-                    For Each S As String In SortedRecommendations
-                        If R.Text = S Then
-                            B = False
+                        ' If recommendations exceed maximum recommendation count, don't bother adding more
+                        If SortedRecommendations.Count >= IdeaCountLimit And IdeaCountLimit > 0 Then
                             Exit For
                         End If
+
+                        ' Add recommendation if allowed
+                        SortedRecommendations.Add(R.Text)
+
                     Next
 
-                    ' If recommendations exceed maximum recommendation count, don't bother adding more
-                    If SortedRecommendations.Count >= IdeaCountLimit And IdeaCountLimit > 0 Then
-                        Exit For
+                    For Each R As Recommendation In RecsUnsortedRef
+
+                        ' Check for repeats
+                        Dim B As Boolean = True
+                        For Each S As String In SortedRecommendations
+                            If R.Text = S Then
+                                B = False
+                                Exit For
+                            End If
+                        Next
+
+                        ' If recommendations exceed maximum recommendation count, don't bother adding more
+                        If SortedRecommendations.Count >= IdeaCountLimit And IdeaCountLimit > 0 Then
+                            Exit For
+                        End If
+
+                        ' Add recommendation if it isn't a repeat
+                        If B Then
+                            SortedRecommendations.Add(R.Text)
+                        End If
+
+                    Next
+
+                    ' If records are frozen, don't update them
+                    '   Note: FreezeRecs is supposed to temporarily delay recommendations; this is why this is so far along in the sequence
+                    '         (An instantaneous go-around would defeat its purpose)
+                    If FreezeRecs Then
+                        FreezeRecs = False
+
+                        ' --- Update old recommendations list ---
+                        RecsOld.Clear()
+
+
+                        RecsOld.AddRange(RecsNew)
+
+
+                        Continue While
+
                     End If
 
-                    ' Add recommendation if it isn't a repeat
-                    If B Then
-                        SortedRecommendations.Add(R.Text)
+                    ' ---------------------- At this point, recommendations have been obtained ----------------------
+
+                    ' If current word equals only recommended word, skip the recommendation
+                    If SortedRecommendations.Count = 1 And WordCurrent <> "" Then
+                        If WordCurrent = SortedRecommendations.Item(0) Then
+                            WordCurrent = ""
+                        End If
                     End If
 
-                Next
+                    ' Update previous word text
+                    WordTextPrev = WordText
+                    WordPast = WordCurrent
 
-                ' If records are frozen, don't update them
-                '   Note: FreezeRecs is supposed to temporarily delay recommendations; this is why this is so far along in the sequence
-                '         (An instantaneous go-around would defeat its purpose)
-                If FreezeRecs Then
-                    FreezeRecs = False
+                    ' If append spaces checkbox is checked, append spaces
+                    If O_TypeSpace Then
+                        For i = 0 To SortedRecommendations.Count - 1
+                            SortedRecommendations.Item(i) = SortedRecommendations.Item(i) & " "
+                        Next
+                    End If
+
+                    ' Remove words with common beginnings based on their length
+                    'TO ADD
+
+                    ' If a maximum number of suggestions has been specified, remove all but those suggestions
+                    'TO ADD
 
                     ' --- Update old recommendations list ---
                     RecsOld.Clear()
@@ -2015,62 +1880,25 @@ Public Class Form1
                     RecsOld.AddRange(RecsNew)
 
 
-                    Continue While
+                    ' Clear memory
+                    RecsNew.Clear()
 
-                End If
-
-                ' ---------------------- At this point, recommendations have been obtained ----------------------
-
-                ' If current word equals only recommended word, skip the recommendation
-                If SortedRecommendations.Count = 1 And WordCurrent <> "" Then
-                    If WordCurrent = SortedRecommendations.Item(0) Then
-                        WordCurrent = ""
+                    ' Reverse recommendations (if appropriate)
+                    If O_Reverse Then
+                        SortedRecommendations.Reverse()
                     End If
-                End If
 
-                ' Update previous word text
-                WordTextPrev = WordText
-                WordPast = WordCurrent
+                    ' Update cumulative recommendations if applicable
+                    If WordCurrent.Length = 1 And WordCurrent <> MainDocCumulativeActiveWord.FirstOrDefault Then
+                        MainDocCumulativeList = SortedRecommendations
+                    ElseIf MainDocCumulativeActiveWord.Length = 0 Then
+                        MainDocCumulativeList = SortedRecommendations
+                    End If
 
-                ' If append spaces checkbox is checked, append spaces
-                If O_TypeSpace Then
-                    For i = 0 To SortedRecommendations.Count - 1
-                        SortedRecommendations.Item(i) = SortedRecommendations.Item(i) & " "
-                    Next
-                End If
+                    ' Report back progress (in this case, use 1 because the suggestions were updated)
+                    TextWorker.ReportProgress(1)
 
-                ' Remove words with common beginnings based on their length
-                'TO ADD
-
-                ' If a maximum number of suggestions has been specified, remove all but those suggestions
-                'TO ADD
-
-                ' --- Update old recommendations list ---
-                RecsOld.Clear()
-
-
-                RecsOld.AddRange(RecsNew)
-
-
-                ' Clear memory
-                RecsNew.Clear()
-
-                ' Reverse recommendations (if appropriate)
-                If O_Reverse Then
-                    SortedRecommendations.Reverse()
-                End If
-
-                ' Update cumulative recommendations if applicable
-                If WordCurrent.Length = 1 And WordCurrent <> MainDocCumulativeActiveWord.FirstOrDefault Then
-                    MainDocCumulativeList = SortedRecommendations
-                ElseIf MainDocCumulativeActiveWord.Length = 0 Then
-                    MainDocCumulativeList = SortedRecommendations
-                End If
-
-                ' Report back progress (in this case, use 1 because the suggestions were updated)
-                TextWorker.ReportProgress(1)
-
-                TotalWordsOld = TotalWordsNew
+                    TotalWordsOld = TotalWordsNew
 
             Catch ex As Exception
             End Try
@@ -2110,25 +1938,21 @@ Public Class Form1
 
             Try
 
-                If O_MDSMethodIdx = 1 Then
+                ' Copy main document data list (because it can change during TextWorker's operation) -
+                Dim WordsListSortedFreeze As New List(Of Recommendation)
+                TextWorkerFreeze = True
 
-                    ' Copy main document data list (because it can change during TextWorker's operation) -
-                    Dim WordsListSortedFreeze As New List(Of Recommendation)
-                    TextWorkerFreeze = True
+                WordsListSortedFreeze.AddRange(RecsOld)
 
-                    WordsListSortedFreeze.AddRange(RecsOld)
+                ' Sort main document data
+                WordsListSortedFreeze.Sort(New RecSortString)
 
-                    ' Sort main document data
-                    WordsListSortedFreeze.Sort(New RecSortString)
+                ' Create trie
+                MainDocTrie = Trie.CreateTrie(WordsListSortedFreeze, TrieDepth)
+                TextWorkerFreeze = False
 
-                    ' Create trie
-                    MainDocTrie = Trie.CreateTrie(WordsListSortedFreeze, TrieDepth)
-                    TextWorkerFreeze = False
-
-                    ' Wait proper time interval
-                    Sleep(1000 * O_MDSTrieSrcInterval)
-
-                End If
+                ' Wait proper time interval
+                Sleep(1000 * O_MDSTrieSrcInterval)
 
             Catch ex As Exception
                 Dim Q = 1
@@ -2698,12 +2522,6 @@ Public Class Settings
         FormOptions.rbn_srt_none.Checked = Form1.O_S_None
         FormOptions.cbx_RecsReverse.Checked = Form1.O_Reverse
 
-        ' Main document sorting method stuff
-        FormOptions.rbnMDSNormal.Checked = Form1.O_MDSMethodIdx = 0
-        FormOptions.rbnMDSTries.Checked = Form1.O_MDSMethodIdx = 1
-        FormOptions.rbnMDSCumulative.Checked = Form1.O_MDSMethodIdx = 2
-        FormOptions.txtTrieUpdateInterval.Text = CStr(Form1.O_MDSTrieSrcInterval)
-
         ' Settings memory is ignored here on purpose
 
     End Sub
@@ -2736,7 +2554,6 @@ Public Class Settings
         Form1.O_S_Popln = False
         Form1.O_S_Dist = True ' Starting setting
         Form1.O_S_None = False
-        Form1.O_MDSMethodIdx = 0
         Form1.O_MDSTrieSrcInterval = 30
 
         ' Customizable key constants [5]
@@ -2884,13 +2701,7 @@ Public Class Settings
                     End If
 
                     ' Main document sorting method
-                    If SLine.StartsWith("MainDocSortMtd=") Then
-                        Form1.O_MDSMethodIdx = CInt(SValue)
-                        FormOptions.rbnMDSNormal.Checked = Form1.O_MDSMethodIdx = 0
-                        FormOptions.rbnMDSTries.Checked = Form1.O_MDSMethodIdx = 1
-                        FormOptions.rbnMDSCumulative.Checked = Form1.O_MDSMethodIdx = 2
-                        Continue While
-                    ElseIf SLine.StartsWith("MainDocTriePrd=") Then
+                    If SLine.StartsWith("MainDocTriePrd=") Then
                         Form1.O_MDSTrieSrcInterval = CInt(SValue)
                         FormOptions.txtTrieUpdateInterval.Text = Form1.O_MDSTrieSrcInterval
                         Continue While
@@ -2992,7 +2803,6 @@ Public Class Settings
         StrList.Add("SortNone=" & BoolToInt(Form1.O_S_None))
 
         ' Main document sorting method
-        StrList.Add("MainDocSortMtd=" & Form1.O_MDSMethodIdx)
         StrList.Add("MainDocTriePrd=" & Form1.O_MDSTrieSrcInterval)
 
         ' Customizable key constants [5]
