@@ -35,7 +35,7 @@ Public Class Form1
 
     ' ----- Google project info - used in autoupdate -----
     ' Current version (MUST BE AN INTEGER)
-    Public Version As Integer = 35
+    Public Version As Integer = 36
 
     ' Latest version path
     Public VersionURL As String = "http://contextype.googlecode.com/svn/latestversion.txt"
@@ -320,7 +320,8 @@ Public Class Form1
         If Not String.IsNullOrWhiteSpace(WordCurrent) Then
             Similarity = StringManipulation.GetAccuracyPercentage(WordCurrent, SortedRecommendations, Not O_EntireWord)
         End If
-        Dim HopperVisible As Boolean = (SortedRecommendations.Count > 0) And (Similarity > (MinAccuracy * 100)) And (GetActiveWindowTitle(TitleLength).Contains("Microsoft Word"))
+        Dim HopperVisible As Boolean = (SortedRecommendations.Count > 0) And (Similarity > (MinAccuracy * 100)) AndAlso _
+            ActiveWindowIsWord()
         If HopperVisible <> Hopper.Visible Then
             Hopper.Visible = HopperVisible
         End If
@@ -341,7 +342,7 @@ Public Class Form1
         If WordCurrent <> "" Then
 
             ' Keep hopper active
-            If SortedNow.Count > 0 And GetActiveWindowTitle(TitleLength).Contains("Microsoft Word") Then
+            If SortedNow.Count > 0 AndAlso ActiveWindowIsWord() Then
                 Hopper.TopMost = True
             End If
 
@@ -537,16 +538,26 @@ Public Class Form1
             PastDocumentHWND = CurDocumentHWND
 
             ' Update global word application/document
-            WordApp = CType(Marshal.GetActiveObject("Word.Application"), Word.Application)
+            Try
+                WordApp = CType(Marshal.GetActiveObject("Word.Application"), Word.Application)
+                If WordApp Is Nothing Then
+                    Continue While ' If this triggers, there is no active word document
+                End If
+            Catch
+                Continue While ' Go around
+            End Try
 
             ' If document is nil, skip it
             Try
-                WordDoc = WordApp.ActiveDocument
+                If WordApp IsNot Nothing AndAlso WordApp.Documents.Count <> 0 Then
+                    WordDoc = WordApp.ActiveDocument
+                End If
             Catch
                 Continue While
             End Try
 
             ' Trigger document re-scan
+            Sleep(200)
             RescanDocument()
 
         End While
@@ -589,7 +600,7 @@ Public Class Form1
         Dim HotkeysWereActive As Boolean = HotkeysActive
 
         ' Get hotkey's ideal status
-        If SortedRecommendations.Count > 0 And GetActiveWindowTitle(TitleLength).Contains("Microsoft Word") Then
+        If SortedRecommendations.Count > 0 AndAlso ActiveWindowIsWord() Then
             HotkeysActive = Hopper.Visible
         Else
             HotkeysActive = False
@@ -607,7 +618,7 @@ Public Class Form1
         ' --- End hotkey stuff ---
 
         ' Hide the hopper (if applicable)
-        If Not GetActiveWindowTitle(TitleLength).Contains("Microsoft Word") And Hopper.Visible Then
+        If Not ActiveWindowIsWord() And Hopper.Visible Then
             If GetActiveWindowTitle(Hopper.Text.Length) = Hopper.Text Then ' 4/18/2012: Possible fix for (still) disappearing hopper (when clicked by mouse - this is the 2nd fix)
                 WordApp.Activate()
             Else
@@ -657,7 +668,9 @@ Public Class Form1
 
         ' Close browser document
         Try
-            WordAppBrowser.Quit(SaveChanges:=False)
+            If WordAppBrowser IsNot Nothing Then
+                WordAppBrowser.Quit(SaveChanges:=False)
+            End If
         Catch ex As Exception
         End Try
 
@@ -691,7 +704,7 @@ Public Class Form1
         If m.Msg = &H312 Then
 
             ' Handle hotkeys if Microsoft Word is active and at least 1 recommendation exists
-            If SortedRecommendations.Count > 0 And ActiveTitle.Contains("Microsoft Word") Then
+            If SortedRecommendations.Count > 0 AndAlso ActiveWindowIsWord() Then
 
                 ' If the keypress is a space and the hopper is active, send a space key to supplement the lost one
                 If Hopper.Visible And m.WParam = 5 Then
@@ -791,7 +804,8 @@ Public Class Form1
                         ' --- This section is basically copied from the tab recommendation insertion ---
 
                         ' Get word
-                        Dim SendWord As String = Hopper.lbox_ideas.Items.Item(Idx)
+                        Dim SendWord As String = "" ' SendWord needs to be initialized to prevent a NullReferenceException
+                        SendWord = Hopper.lbox_ideas.Items.Item(Idx)
 
                         ' Remove invalid characters from SendWord
                         SendWord = SendWord.Replace("{", "").Replace("}", "")
@@ -1273,8 +1287,7 @@ Public Class Form1
             Try
 
                 ' If document isn't active, loop again
-                Dim SZ As String = GetActiveWindowTitle(TitleLength)
-                If Not GetActiveWindowTitle(TitleLength).Contains("Microsoft Word") Then
+                If Not ActiveWindowIsWord() Then
                     Throttle(False)
                     Continue While
                 End If
@@ -1286,19 +1299,26 @@ Public Class Form1
 
                 ' If document is closed, loop again
                 Try
-                    WordDoc = WordApp.ActiveDocument
+                    If WordApp IsNot Nothing AndAlso WordApp.Documents.Count <> 0 Then
+                        WordDoc = WordApp.ActiveDocument
+                    Else
+                        Continue While ' No documents to select from
+                    End If
                 Catch ex As Exception
 
                     ' Known bug with no known (to author) fix - band aid warning to restart CType (which usually fixes things)
                     '   NOTE: Auto-restart was removed because it never worked.
                     If ex.Message.Contains("The RPC server is unavailable.") Then
-                        MsgBox("A minor error has occurred within the ContexType system (RPC server error) that requires that ContexType restart. ContexType will now exit.")
+                        '    'MsgBox("A minor error has occurred within the ContexType system (RPC server error) that requires that ContexType restart. ContexType will now exit.")
 
-                        ' Launch another ContexType window
-                        'Shell(Process.GetCurrentProcess.MainModule.FileName)
+                        '    ' Try waiting a second
+                        '    Sleep(1000)
 
-                        ' Close the active one
-                        Me.Close()
+                        '    ' Close the active one
+                        '    'Me.Close()
+
+                        ' Authorize the re-initialization of the WordApp object (by unlocking it - WindowChangeWorker updates WordApp itself)
+                        FreezeActiveText = False
 
                     End If
 
@@ -1311,7 +1331,15 @@ Public Class Form1
                 ' Get text
                 Dim WordTextSpaces As String
                 Try
-                    WordTextSpaces = WordDoc.Content.Text '.Replace(vbCr, " ")
+                    If WordDoc IsNot Nothing Then
+                        WordTextSpaces = WordDoc.Content.Text '.Replace(vbCr, " ")
+                    Else
+
+                        ' WordDoc is null
+                        Throttle(False)
+                        Continue While
+
+                    End If
                 Catch
                     Throttle(False)
                     Continue While
@@ -1525,8 +1553,6 @@ Public Class Form1
                     TotalWordsOld = TotalWordsNew
 
                     RecsOld.AddRange(RecsNew)
-
-
                     Continue While
 
                 End If
@@ -1542,13 +1568,11 @@ Public Class Form1
 
                     ' Update data
                     TotalWordsOld = TotalWordsNew
+
                     RecsOld.Clear()
-
-
                     RecsOld.AddRange(RecsNew)
-
-
                     Continue While
+
                 End If
 
                 ' Find list of recommended words
@@ -1840,11 +1864,7 @@ Public Class Form1
 
                     ' --- Update old recommendations list ---
                     RecsOld.Clear()
-
-
                     RecsOld.AddRange(RecsNew)
-
-
                     Continue While
 
                 End If
@@ -1877,10 +1897,7 @@ Public Class Form1
 
                 ' --- Update old recommendations list ---
                 RecsOld.Clear()
-
-
                 RecsOld.AddRange(RecsNew)
-
 
                 ' Clear memory
                 RecsNew.Clear()
@@ -2059,6 +2076,12 @@ Public Class Form1
         Return FilePath.Substring(Math.Max(FilePath.LastIndexOf("."), 0))
     End Function
 
+    ' Checks if a Microsoft Word window is active (based on title)
+    Public Shared Function ActiveWindowIsWord() As Boolean
+        Dim ActiveWinTitle As String = Form1.GetActiveWindowTitle(Form1.TitleLength)
+        Return Regex.IsMatch(ActiveWinTitle, "(Microsoft|Office|\s|)+Word\d{0,4}")
+    End Function
+
 End Class
 
 ' String manipulation
@@ -2089,7 +2112,6 @@ Public Class StringManipulation
 
         ' Normal method
         SendKeys.Send(Text)
-        SendKeys.Flush()
 
         ' Return
         Return
