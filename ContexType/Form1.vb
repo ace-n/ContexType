@@ -16,6 +16,8 @@
 ' [9]: http://community.topcoder.com/tc?module=Static&d1=tutorials&d2=usingTries
 ' [10]: http://social.msdn.microsoft.com/Forums/en-US/vbgeneral/thread/c1a24688-d844-4adc-9d85-416a7158c6ba/ [WndProc + Hotkeys]
 ' [11]: http://www.techrepublic.com/blog/programming-and-development/download-files-over-the-web-with-nets-webclient-class/695
+' [12]: ACM@UIUC members
+' [13]: http://www.vb-helper.com/howto_net_tray_icon.html
 
 ' Updater (cmd.exe syntax)
 ' http://ss64.com/nt/del.html
@@ -80,6 +82,7 @@ Public Class Form1
     Public O_NumSelection As Boolean = False
     Public O_UseNumberpad As Boolean = True
     Public O_UseCopyPaste As Boolean = False
+    Public O_HideOnStart As Boolean = False
 
     ' Sorting method
     Public O_S_Length As Boolean
@@ -105,6 +108,8 @@ Public Class Form1
     Public SM_UseStoredRefs As Boolean = True
 
     ' ------ Misc. Global Variables ------
+
+    Public Shared HasBeenMinimizedBefore As Boolean = False ' Used to determine whether how-to-restore hint should be shown
 
     ' Fixed key constants [5]
     Public VK_Enter As Integer = Keys.Enter
@@ -169,11 +174,83 @@ Public Class Form1
     Declare Function UnregisterHotKey Lib "user32" (ByVal hwnd As IntPtr, ByVal id As Integer) As Integer
 #End Region
 
+#Region "Tray menu handlers"
+
+    ' Tray menu object
+    Private CtxMenu As New ContextMenu
+
+    ' Exit button
+    Private WithEvents ExitBtn As MenuItem
+    Public Sub CtxMenu_Close() Handles ExitBtn.Click
+        Me.Close() ' Exit (on-exit cleanup is handled elsewhere)
+    End Sub
+
+    ' About button
+    Private WithEvents AboutBtn As MenuItem
+    Public Sub CtxMenu_About() Handles AboutBtn.Click
+        AboutBox1.Show() ' Show about box
+    End Sub
+
+    ' Show-me button
+    Public WithEvents ShowMeBtn As MenuItem
+    Public Sub ShowMe() Handles ShowMeBtn.Click
+
+        ' Hide other stuff
+        FormOptions.Hide()
+        FormFAQ.Hide()
+        Sleep(100)
+
+        ' Show me
+        Me.Show()
+
+    End Sub
+
+    ' Minimization hook (hides the form on minimization so that the context menu works properly)
+    Private Sub HideMe() Handles Me.Resize
+        If Me.WindowState = FormWindowState.Minimized Then
+            Me.WindowState = FormWindowState.Normal
+            Me.Hide()
+            If (Not Form1.HasBeenMinimizedBefore) Then
+                ShowMinimizationHint()
+                Form1.HasBeenMinimizedBefore = True
+            End If
+        End If
+    End Sub
+
+    ' Minimization hint displayer
+    Public Sub ShowMinimizationHint()
+        TrayIcon.ShowBalloonTip(7000, "ContexType has been minimized!", "To restore/maximize the ContexType window(s), right click the ContexType tray icon." _
+                                + " Auto-complete behavior will function as it normally does regardless of whether or not ContexType is minimized.", ToolTipIcon.Info)
+    End Sub
+
+#End Region
+
     ' Start-up functions
     Public Sub Form1_Load(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles MyBase.Load
 
         ' Auto-version title
         Me.Text &= " " & CStr(Version / 100 + 1)
+
+        ' - Tray icon stuff -
+        ' Add icon to tray [13]
+        TrayIcon.Text = "ContexType"
+        TrayIcon.Icon = New Icon(Me.Icon, New Size(Me.Icon.Width * 3, Me.Icon.Height * 3))
+
+        ' Menu
+        Dim MenuItems As String() = {"Main Window", "Options", "Help", "About", "Exit"}
+        For i = 0 To MenuItems.Count - 1
+            CtxMenu.MenuItems.Add(MenuItems.GetValue(i).ToString)
+        Next
+        TrayIcon.ContextMenu = CtxMenu
+
+        ' Button linking
+        ShowMeBtn = CtxMenu.MenuItems.Item(0)             ' Main Window / Home button
+        FormOptions.ShowMeBtn = CtxMenu.MenuItems.Item(1) ' Options button
+        FormFAQ.ShowMeBtn = CtxMenu.MenuItems.Item(2)     ' Help / FAQ button
+        AboutBtn = CtxMenu.MenuItems.Item(3)              ' About button (triggers dialog box, not a form)
+        ExitBtn = CtxMenu.MenuItems.Item(4)
+
+        ' - End tray icon stuff -
 
         ' Misc
         MasterLocation = Me.Location
@@ -205,6 +282,11 @@ Public Class Form1
         '   available; thus, the user must de-activate them each launch or reset them outright)
         Dim QuerySuccess As Integer = Settings.QuerySettingsFile
 
+        ' If query failed, revert to default
+        If QuerySuccess = 0 Then
+            Settings.DefaultSettings()
+        End If
+
         ' Update checking (if enabled in settings)
         If UpdateMode <> 0 Then
 
@@ -231,12 +313,6 @@ Public Class Form1
 
         End If
 
-
-        ' If query failed, revert to default
-        If QuerySuccess = 0 Then
-            Settings.DefaultSettings()
-        End If
-
         ' Start throttling procedure
         ThrottleWorker.RunWorkerAsync()
 
@@ -254,6 +330,30 @@ Public Class Form1
         ' Main form is loaded in next operation
         '   This allows notification messages about references/settings to be shown
         MainFormLoaded = True
+
+        ' Show main form, if appropriate
+        MainFormShowTicks = 3
+        If Not O_HideOnStart Then
+            MainFormShowTicks = 1
+            Me.Visible = True
+        End If
+
+    End Sub
+
+    ' Form hider
+    Private MainFormShowTicks As Integer = 3
+    Public Overloads Sub SetVisibleCore() Handles MyBase.VisibleChanged
+
+        ' Update (a few) settings dependent variables
+        If MainFormShowTicks > 0 Then
+            Me.Visible = False ' Not O_HideOnStart
+            If MainFormShowTicks = 1 Then
+                Me.Opacity = 1
+            End If
+            MainFormShowTicks -= 1
+        End If
+
+        Return
 
     End Sub
 
@@ -1195,11 +1295,12 @@ Public Class Form1
         End Try
 
         ' Add shortened file path to the list box
-        Dim ShortPath As String = FilePath
-        While ShortPath.Length > 150 And (ShortPath.Contains("/") Or ShortPath.Contains("\"))
-            ShortPath = ShortPath.Substring(Math.Max(ShortPath.IndexOf("/"), ShortPath.IndexOf("\")) + 1)
-        End While
-        Form1.lbox_files.Items.Add(ShortPath)
+        Dim ShortPathMatch As Match = Regex.Match(FilePath, "(?<=(/|\\)).{0,150}$")
+        If ShortPathMatch.Success Then
+            Form1.lbox_files.Items.Add(ShortPathMatch.Value)
+        Else
+            Form1.lbox_files.Items.Add(FilePath)
+        End If
 
         ' Add full file path to entire path file list
         Form1.EntirePathFileList.Add(FilePath)
@@ -1207,9 +1308,10 @@ Public Class Form1
         Dim FileText As String = WordAppBrowser.ActiveDocument.Content.Text
 
         ' Format text
-        FileText = FileText.Replace("(", "").Replace(")", "").Replace(Chr(34), "").Replace("[", "").Replace("]", "").
-                   Replace("?", "").Replace("!", "").Replace(".", "").Replace("/", " ").Replace("-", " ").
-                   Replace(":", " ").Replace(";", " ").Replace(",", "").Replace(ControlChars.Tab, " ")
+        Dim ReplaceStr As String = "()[]?!./-:;," & ControlChars.Tab & Chr(34)
+        For Each c As Char In ReplaceStr
+            FileText = FileText.Replace(c, "")
+        Next
 
         ' Word/count arrays
         Dim FileRecs As New List(Of Recommendation)
@@ -1350,7 +1452,7 @@ Public Class Form1
                 If O_IgnoreCase Then
                     WordTextSpaces = WordTextSpaces.ToLower
                 End If
-                WordText = WordTextSpaces.Replace("  ", " ").Replace("  ", " ")
+                WordText = Regex.Replace(WordTextSpaces, "\s{2,}", " ")
 
                 ' Make sure WordText isn't nil (first go)
                 If String.IsNullOrWhiteSpace(WordText) Then
@@ -1454,12 +1556,12 @@ Public Class Form1
                                 End If
                             End If
 
+                            ' Search the immediate surroundings
+                            For j = -2 To 2
 
-                            For j = -1 To 1
-
-                                ' Exception handler
+                                ' Bounds checking
                                 ILO = i + j
-                                If ILO < 0 Or ILO > RecsOld.Count - 1 Then
+                                If ILO < 0 OrElse ILO > RecsOld.Count - 1 Then
                                     Continue For
                                 End If
 
@@ -2212,7 +2314,7 @@ Public Class StringManipulation
 
         ' Sort raw words (to optimize processing)
         '   Note: using the indexOf function to search an array is O(n) and so is iterating through anothe array; therefore, the old approach was
-        '   O(n*m) --> O(n^2)...using an O(n) sorting algorithm and then an O(n) iteration system is simply O(2n). (Thus, this theoretically is more efficient)
+        '   O(n*m) --> O(n^2)...using an O(n lg n) sorting algorithm and then an O(n) iteration system is simply O(2n). (Thus, this theoretically is more efficient)
 
         ' Define a new and unsorted array of the words to be used later in the TextWorker process
         Dim WordsListAllNoSort As String() = WordsListAll.Clone

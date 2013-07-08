@@ -8,149 +8,181 @@
 
     End Sub
 
-    Public Sub UpdateLocation() Handles Me.Move
+    Private Sub UpdateLocation() Handles Me.Move
         Form1.MasterLocation = Me.Location
     End Sub
 
+    ' Show-me button
+    Public WithEvents ShowMeBtn As MenuItem
+    Public Sub ShowMe() Handles ShowMeBtn.Click
+
+        ' Hide other stuff
+        Form1.Hide()
+        FormFAQ.Hide()
+        Form1.Sleep(100)
+
+        ' Show me
+        Me.Show()
+
+    End Sub
+
+    ' Minimization hook (hides the form on minimization so that the context menu works properly)
+    Private Sub HideMe() Handles Me.Resize
+        If Me.WindowState = FormWindowState.Minimized Then
+            Me.WindowState = FormWindowState.Normal
+            Me.Hide()
+            If (Not Form1.HasBeenMinimizedBefore) Then
+                Form1.ShowMinimizationHint()
+                Form1.HasBeenMinimizedBefore = True
+            End If
+        End If
+    End Sub
+
 #Region "Hints"
-    Public Sub H_Main() Handles Me.MouseEnter
+    Private Sub H_Main() Handles Me.MouseEnter
         txt_hints.Text = "Mouse over something to learn more about it."
     End Sub
 
     ' Groupboxes
-    Public Sub H_gbx1() Handles GroupBox1.MouseEnter
+    Private Sub H_gbx1() Handles GroupBox1.MouseEnter
         txt_hints.Text = "Mouse over something to learn more about it."
     End Sub
-    Public Sub H_gbx2() Handles GroupBox2.MouseEnter
+    Private Sub H_gbx2() Handles GroupBox2.MouseEnter
         txt_hints.Text = "Mouse over something to learn more about it."
     End Sub
-    Public Sub H_gbx3() Handles GroupBox3.MouseEnter
+    Private Sub H_gbx3() Handles GroupBox3.MouseEnter
         txt_hints.Text = "Mouse over something to learn more about it."
     End Sub
-    Public Sub H_gbx4() Handles GroupBox4.MouseEnter
+    Private Sub H_gbx4() Handles GroupBox4.MouseEnter
         txt_hints.Text = "Mouse over something to learn more about it."
     End Sub
-    Public Sub H_gbx5() Handles GroupBox5.MouseEnter
+    Private Sub H_gbx5() Handles GroupBox5.MouseEnter
         txt_hints.Text = "Mouse over something to learn more about it."
     End Sub
-    Public Sub H_gbx6() Handles GroupBox6.MouseEnter
+    Private Sub H_gbx6() Handles GroupBox6.MouseEnter
         txt_hints.Text = "Mouse over something to learn more about it."
     End Sub
 
     ' Textboxes
-    Public Sub H_MinLength() Handles txtMinLength.MouseEnter
+    Private Sub H_MinLength() Handles txtMinLength.MouseEnter
         txt_hints.Text = "Specifies the minimum number of letters a word must have for it to be suggested."
     End Sub
-    Public Sub H_MinCnt() Handles txtMinCnt.MouseEnter
+    Private Sub H_MinCnt() Handles txtMinCnt.MouseEnter
         txt_hints.Text = "Specifies the minimum number of times a word must appear in either the main or reference documents for it to be suggested."
     End Sub
-    Public Sub H_AutoPrc() Handles txtAutoPrc.MouseEnter
+    Private Sub H_AutoPrc() Handles txtAutoPrc.MouseEnter
         txt_hints.Text = "Specifies how many letters (number or percentage) a partial word must share with a suggested one before the program autotypes it. Percentages are less than 1 (ex 0.55)"
     End Sub
-    Public Sub H_MinAcc() Handles txtMinAcc.MouseEnter
+    Private Sub H_MinAcc() Handles txtMinAcc.MouseEnter
         txt_hints.Text = "Specifies how relevant the suggestions provided must be before they will be shown in a drop-down list."
     End Sub
-    Public Sub H_TrieDepth() Handles txtRefTrieDepth.MouseEnter
+    Private Sub H_TrieDepth() Handles txtRefTrieDepth.MouseEnter
         txt_hints.Text = "Specifies how many layers the trie will use. More layers need more memory, but improve sorting speed for large numbers of words. This system is only for reference documents."
     End Sub
-    Public Sub H_IdeaCountLimit() Handles txtIdeaCountLimit.MouseEnter
+    Private Sub H_IdeaCountLimit() Handles txtIdeaCountLimit.MouseEnter
         txt_hints.Text = "Specifies the maximum number of ideas that can be suggested at a time. Setting this number to 0 shows all suggestions."
     End Sub
 
     ' Boolean options
-    Public Sub H_ShowWord() Handles cbxEntireWord.MouseEnter
+    Private Sub H_ShowWord() Handles cbxEntireWord.MouseEnter
         txt_hints.Text = "If checked, the entire suggestion word is shown. Otherwise, only the letters you haven't typed yet are shown."
     End Sub
-    Public Sub H_AutoType() Handles cbxAuto.MouseEnter
+    Private Sub H_AutoType() Handles cbxAuto.MouseEnter
         txt_hints.Text = "If checked, the program will automatically type what it thinks you are typing without asking."
     End Sub
-    Public Sub H_MoveHopper() Handles cbxMoveBox.MouseEnter
+    Private Sub H_MoveHopper() Handles cbxMoveBox.MouseEnter
         txt_hints.Text = "If checked, the suggestions window will follow the cursor. Otherwise, it will stay in one place."
     End Sub
-    Public Sub H_CapitalSense() Handles cbxToLower.MouseEnter
+    Private Sub H_CapitalSense() Handles cbxToLower.MouseEnter
         txt_hints.Text = "If checked, word case (capitalization) will be ignored. Otherwise, it will not be."
     End Sub
-    Public Sub H_SpaceAppend() Handles cbxSpace.MouseEnter
+    Private Sub H_SpaceAppend() Handles cbxSpace.MouseEnter
         txt_hints.Text = "If checked, a space will be added after each autocompleted word."
     End Sub '
-    Public Sub H_RootCnt() Handles cbx_SM_storedRefs.MouseEnter
+    Private Sub H_RootCnt() Handles cbx_SM_storedRefs.MouseEnter
         txt_hints.Text = "If checked, ContexType will save references between uses."
     End Sub
-    Public Sub H_CopyPasteMethod(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles cbxCopyPaste.MouseEnter
+    Private Sub H_CopyPasteMethod() Handles cbxCopyPaste.MouseEnter
         txt_hints.Text = "If checked, selected suggestions will be copy-pasted into the document in one block. If not, they will be auto-typed letter by letter."
     End Sub
 
-    Public Sub H_NumSelect() Handles cbxNumpadSelection.MouseEnter
+    ' Hide on startup
+    Private Sub H_HideOnStartUp() Handles cbxHideOnStart.MouseEnter
+        txt_hints.Text = "If checked, the main ContexType window will be minimized to the System Tray on startup. If not, it will be displayed normally."
+    End Sub
+
+    ' Numpad stuff
+    Private Sub H_NumSelect() Handles cbxNumpadSelection.MouseEnter
         txt_hints.Text = "If checked, a number will appear next to some ideas allowing you to select a specific idea."
     End Sub
-    Public Sub H_NumpadSelectEnabled() Handles cbxNumSelection_UseNumpad.MouseEnter
+    Private Sub H_NumpadSelectEnabled() Handles cbxNumSelection_UseNumpad.MouseEnter
         txt_hints.Text = "If checked, numerical suggestion selection will use the numpad. Otherwise, the horizontal number line (at the top of most keyboards) will be used."
     End Sub
 
     ' Sorting method
-    Public Sub H_LengthSort() Handles rbn_srt_Len.MouseEnter
+    Private Sub H_LengthSort() Handles rbn_srt_Len.MouseEnter
         txt_hints.Text = "Sort words by length."
     End Sub
-    Public Sub H_NumSort() Handles rbn_srt_pop.MouseEnter
+    Private Sub H_NumSort() Handles rbn_srt_pop.MouseEnter
         txt_hints.Text = "Sort words by the number of them present in main and reference document(s)."
     End Sub
-    Public Sub H_DistSort() Handles rbn_srt_dst.MouseEnter
+    Private Sub H_DistSort() Handles rbn_srt_dst.MouseEnter
         txt_hints.Text = "Sort words by closest number of words between current and suggested words in main document."
     End Sub
-    Public Sub H_NoSort(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles rbn_srt_none.MouseEnter
+    Private Sub H_NoSort(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles rbn_srt_none.MouseEnter
         txt_hints.Text = "Don't sort words at all"
     End Sub
-    Public Sub H_ReverseRecs() Handles cbx_RecsReverse.MouseEnter
+    Private Sub H_ReverseRecs() Handles cbx_RecsReverse.MouseEnter
         txt_hints.Text = "If checked, the order of words in the word lists will be reversed."
     End Sub
-    Public Sub H_CPUConsumption(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles tbrCPUConsumption.MouseEnter, lblCPUConsumption.MouseEnter
+    Private Sub H_CPUConsumption(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles tbrCPUConsumption.MouseEnter, lblCPUConsumption.MouseEnter
         txt_hints.Text = "Move the trackbar to control how much CPU power is used. A higher percentage speeds up searching, but can slow down other programs and use more electricity."
     End Sub
 
     ' Main document search method
-    Public Sub H_MD_UseTries(ByVal sender As System.Object, ByVal e As System.EventArgs)
+    Private Sub H_MD_UseTries(ByVal sender As System.Object, ByVal e As System.EventArgs)
         txt_hints.Text = "If checked, active document suggestions are found using tries. The word bank doesn't update instantly, but the recommendation search is fast for large documents."
     End Sub
-    Public Sub H_MD_Normal(ByVal sender As System.Object, ByVal e As System.EventArgs)
+    Private Sub H_MD_Normal(ByVal sender As System.Object, ByVal e As System.EventArgs)
         txt_hints.Text = "If checked, active document suggestions are found using a standard method. The word bank updates instantly, but the recommendation search is slow for large documents."
     End Sub
-    Public Sub H_TrieInterval(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles txtTrieUpdateInterval.MouseEnter
+    Private Sub H_TrieInterval(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles txtTrieUpdateInterval.MouseEnter
         txt_hints.Text = "The amount of time (in seconds) between trie/word bank updates."
     End Sub
 
     ' Auto-update
-    Public Sub H_UpdateAuto(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles rbn_Upd8_Auto.MouseEnter
+    Private Sub H_UpdateAuto(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles rbn_Upd8_Auto.MouseEnter
         txt_hints.Text = "If checked, ContexType will try to automatically check and install updates every time it is ran."
     End Sub
-    Public Sub H_UpdateAsk(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles rbn_Upd8_Ask.MouseEnter
+    Private Sub H_UpdateAsk(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles rbn_Upd8_Ask.MouseEnter
         txt_hints.Text = "If checked, ContexType will try to automatically check for updates every time it is ran. If an update is found, ContexType will ask you for permission to install it."
     End Sub
-    Public Sub H_UpdateNone(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles rbn_Upd8_None.MouseEnter
+    Private Sub H_UpdateNone(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles rbn_Upd8_None.MouseEnter
         txt_hints.Text = "If checked, no automatic updating will be performed."
     End Sub
 
     ' Remappers
-    Public Sub H_RemapAccept(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles btn_rmp_Accept.MouseEnter
+    Private Sub H_RemapAccept(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles btn_rmp_Accept.MouseEnter
         txt_hints.Text = "Click this button to change the word auto-completion key. (Default: Tab key)"
     End Sub
-    Public Sub H_RemapHideList(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles btn_rmp_HideList.MouseEnter
+    Private Sub H_RemapHideList(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles btn_rmp_HideList.MouseEnter
         txt_hints.Text = "Click this button to change the list hiding key. (Default: Esc key)"
     End Sub
-    Public Sub H_RemapArrowUp(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles btn_rmp_ArrowUp.MouseEnter
+    Private Sub H_RemapArrowUp(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles btn_rmp_ArrowUp.MouseEnter
         txt_hints.Text = "Click this button to change the previous list item key. (Default: Up Arrow key)"
     End Sub
-    Public Sub H_RemapArrowDown(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles btn_rmp_ArrowDown.MouseEnter
+    Private Sub H_RemapArrowDown(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles btn_rmp_ArrowDown.MouseEnter
         txt_hints.Text = "Click this button to change the next list item key. (Default: Down Arrow key)"
     End Sub
 
     ' Settings memory
-    Public Sub H_SM_Reset(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles btn_SM_resetStored.MouseEnter
+    Private Sub H_SM_Reset(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles btn_SM_resetStored.MouseEnter
         txt_hints.Text = "Click this button to reset the stored settings to their defaults."
     End Sub
-    Public Sub H_SM_UseStored(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles cbx_SM_useStored.MouseEnter
+    Private Sub H_SM_UseStored(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles cbx_SM_useStored.MouseEnter
         txt_hints.Text = "If checked, ContexType will try to use its previous settings. Otherwise, it will use the default settings."
     End Sub
-    Public Sub H_SM_StoreSettings(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles cbx_SM_storeSettings.MouseEnter
+    Private Sub H_SM_StoreSettings(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles cbx_SM_storeSettings.MouseEnter
         txt_hints.Text = "If checked, ContexType will save the current settings and use them next time if possible."
     End Sub
 #End Region
@@ -472,4 +504,14 @@
         Form1.TargetCPUUse = CInt(tbrCPUConsumption.Value * 5)
         lblCPUConsumption.Text = "Target CPU Consumption: " & Form1.TargetCPUUse & "%"
     End Sub
+
+    Private Sub cbxCopyPaste_CheckedChanged(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles cbxCopyPaste.CheckedChanged
+
+    End Sub
+
+    Private Sub cbxHideOnStart_CheckedChanged() Handles cbxHideOnStart.CheckedChanged
+        SettingsChanged = True
+        Form1.O_HideOnStart = cbxHideOnStart.Checked
+    End Sub
+
 End Class

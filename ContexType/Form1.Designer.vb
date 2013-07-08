@@ -22,6 +22,7 @@ Partial Class Form1
     'Do not modify it using the code editor.
     <System.Diagnostics.DebuggerStepThrough()> _
     Private Sub InitializeComponent()
+        Me.components = New System.ComponentModel.Container()
         Dim resources As System.ComponentModel.ComponentResourceManager = New System.ComponentModel.ComponentResourceManager(GetType(Form1))
         Me.TextWorker = New System.ComponentModel.BackgroundWorker()
         Me.HopperWorker = New System.ComponentModel.BackgroundWorker()
@@ -45,6 +46,7 @@ Partial Class Form1
         Me.ThrottleWorker = New System.ComponentModel.BackgroundWorker()
         Me.MainDocTrieWorker = New System.ComponentModel.BackgroundWorker()
         Me.W1 = New System.ComponentModel.BackgroundWorker()
+        Me.TrayIcon = New System.Windows.Forms.NotifyIcon(Me.components)
         Me.GroupBox3.SuspendLayout()
         Me.MenuStrip1.SuspendLayout()
         Me.SuspendLayout()
@@ -212,8 +214,12 @@ Partial Class Form1
         '
         Me.W1.WorkerReportsProgress = True
         '
-        'Form1
+        'TrayIcon
         '
+        Me.TrayIcon.Visible = True
+        '
+        'Form1
+        Me.Opacity = 0 ' So form is hidden on startup
         Me.AutoScaleDimensions = New System.Drawing.SizeF(8.0!, 16.0!)
         Me.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font
         Me.BackColor = System.Drawing.SystemColors.Control
@@ -259,5 +265,6 @@ Partial Class Form1
     Friend WithEvents MainDocTrieWorker As System.ComponentModel.BackgroundWorker
     Friend WithEvents W1 As System.ComponentModel.BackgroundWorker
     Friend WithEvents btn_CopyRefs As System.Windows.Forms.Button
+    Friend WithEvents TrayIcon As System.Windows.Forms.NotifyIcon
 
 End Class

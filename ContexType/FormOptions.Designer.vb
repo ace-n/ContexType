@@ -22,8 +22,10 @@ Partial Class FormOptions
     'Do not modify it using the code editor.
     <System.Diagnostics.DebuggerStepThrough()> _
     Private Sub InitializeComponent()
+        Me.components = New System.ComponentModel.Container()
         Dim resources As System.ComponentModel.ComponentResourceManager = New System.ComponentModel.ComponentResourceManager(GetType(FormOptions))
         Me.GroupBox2 = New System.Windows.Forms.GroupBox()
+        Me.cbxHideOnStart = New System.Windows.Forms.CheckBox()
         Me.cbxCopyPaste = New System.Windows.Forms.CheckBox()
         Me.cbxNumSelection_UseNumpad = New System.Windows.Forms.CheckBox()
         Me.cbxNumpadSelection = New System.Windows.Forms.CheckBox()
@@ -71,6 +73,7 @@ Partial Class FormOptions
         Me.rbn_Upd8_None = New System.Windows.Forms.RadioButton()
         Me.rbn_Upd8_Ask = New System.Windows.Forms.RadioButton()
         Me.rbn_Upd8_Auto = New System.Windows.Forms.RadioButton()
+        Me.TrayIcon = New System.Windows.Forms.NotifyIcon(Me.components)
         Me.GroupBox2.SuspendLayout()
         Me.GroupBox1.SuspendLayout()
         CType(Me.tbrCPUConsumption, System.ComponentModel.ISupportInitialize).BeginInit()
@@ -82,6 +85,7 @@ Partial Class FormOptions
         '
         'GroupBox2
         '
+        Me.GroupBox2.Controls.Add(Me.cbxHideOnStart)
         Me.GroupBox2.Controls.Add(Me.cbxCopyPaste)
         Me.GroupBox2.Controls.Add(Me.cbxNumSelection_UseNumpad)
         Me.GroupBox2.Controls.Add(Me.cbxNumpadSelection)
@@ -99,16 +103,28 @@ Partial Class FormOptions
         Me.GroupBox2.TabStop = False
         Me.GroupBox2.Text = "Auto-Completion Options"
         '
+        'cbxHideOnStart
+        '
+        Me.cbxHideOnStart.AccessibleDescription = ""
+        Me.cbxHideOnStart.AutoSize = True
+        Me.cbxHideOnStart.Location = New System.Drawing.Point(227, 23)
+        Me.cbxHideOnStart.Name = "cbxHideOnStart"
+        Me.cbxHideOnStart.Size = New System.Drawing.Size(136, 21)
+        Me.cbxHideOnStart.TabIndex = 18
+        Me.cbxHideOnStart.Text = "Minimize on start"
+        Me.cbxHideOnStart.UseVisualStyleBackColor = True
+        '
         'cbxCopyPaste
         '
         Me.cbxCopyPaste.AccessibleDescription = ""
         Me.cbxCopyPaste.AutoSize = True
-        Me.cbxCopyPaste.Location = New System.Drawing.Point(235, 23)
+        Me.cbxCopyPaste.Location = New System.Drawing.Point(227, 52)
         Me.cbxCopyPaste.Name = "cbxCopyPaste"
-        Me.cbxCopyPaste.Size = New System.Drawing.Size(141, 21)
+        Me.cbxCopyPaste.Size = New System.Drawing.Size(179, 21)
         Me.cbxCopyPaste.TabIndex = 17
-        Me.cbxCopyPaste.Text = "Copy-paste mode"
+        Me.cbxCopyPaste.Text = "Copy-paste mode - WIP"
         Me.cbxCopyPaste.UseVisualStyleBackColor = True
+        Me.cbxCopyPaste.Visible = False
         '
         'cbxNumSelection_UseNumpad
         '
@@ -630,6 +646,11 @@ Partial Class FormOptions
         Me.rbn_Upd8_Auto.Text = "Automatic"
         Me.rbn_Upd8_Auto.UseVisualStyleBackColor = True
         '
+        'TrayIcon
+        '
+        Me.TrayIcon.Text = "TrayIcon"
+        Me.TrayIcon.Visible = True
+        '
         'FormOptions
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(8.0!, 16.0!)
@@ -713,4 +734,6 @@ Partial Class FormOptions
     Friend WithEvents cbxCopyPaste As System.Windows.Forms.CheckBox
     Friend WithEvents lblCPUConsumption As System.Windows.Forms.Label
     Friend WithEvents tbrCPUConsumption As System.Windows.Forms.TrackBar
+    Friend WithEvents cbxHideOnStart As System.Windows.Forms.CheckBox
+    Friend WithEvents TrayIcon As System.Windows.Forms.NotifyIcon
 End Class

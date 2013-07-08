@@ -1,5 +1,31 @@
 ﻿Public Class FormFAQ
 
+    ' Show-me button
+    Public WithEvents ShowMeBtn As MenuItem
+    Public Sub ShowMe() Handles ShowMeBtn.Click
+
+        ' Hide other stuff
+        FormOptions.Hide()
+        Form1.Hide()
+        Form1.Sleep(100)
+
+        ' Show me
+        Me.Show()
+
+    End Sub
+
+    ' Minimization hook (hides the form on minimization so that the context menu works properly)
+    Private Sub HideMe() Handles Me.Resize
+        If Me.WindowState = FormWindowState.Minimized Then
+            Me.WindowState = FormWindowState.Normal
+            Me.Hide()
+            If (Not Form1.HasBeenMinimizedBefore) Then
+                Form1.ShowMinimizationHint()
+                Form1.HasBeenMinimizedBefore = True
+            End If
+        End If
+    End Sub
+
     Private Sub FormFAQ_Load(ByVal sender As System.Object, ByVal e As System.EventArgs) Handles MyBase.Load
         Me.Text = Form1.Text + " - Help"
     End Sub

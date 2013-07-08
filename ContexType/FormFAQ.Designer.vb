@@ -22,9 +22,11 @@ Partial Class FormFAQ
     'Do not modify it using the code editor.
     <System.Diagnostics.DebuggerStepThrough()> _
     Private Sub InitializeComponent()
+        Me.components = New System.ComponentModel.Container()
         Dim resources As System.ComponentModel.ComponentResourceManager = New System.ComponentModel.ComponentResourceManager(GetType(FormFAQ))
         Me.Label1 = New System.Windows.Forms.Label()
         Me.btnDone = New System.Windows.Forms.Button()
+        Me.TrayIcon = New System.Windows.Forms.NotifyIcon(Me.components)
         Me.SuspendLayout()
         '
         'Label1
@@ -48,6 +50,11 @@ Partial Class FormFAQ
         Me.btnDone.Text = "Done"
         Me.btnDone.UseVisualStyleBackColor = True
         '
+        'TrayIcon
+        '
+        Me.TrayIcon.Text = "NotifyIcon1"
+        Me.TrayIcon.Visible = True
+        '
         'FormFAQ
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(8.0!, 16.0!)
@@ -65,4 +72,5 @@ Partial Class FormFAQ
     End Sub
     Friend WithEvents Label1 As System.Windows.Forms.Label
     Friend WithEvents btnDone As System.Windows.Forms.Button
+    Friend WithEvents TrayIcon As System.Windows.Forms.NotifyIcon
 End Class

@@ -38,6 +38,7 @@ Public Class Settings
         FormOptions.cbxNumpadSelection.Checked = Form1.O_NumSelection
         FormOptions.cbxNumSelection_UseNumpad.Checked = Form1.O_UseNumberpad
         FormOptions.cbxCopyPaste.Checked = Form1.O_UseCopyPaste
+        FormOptions.cbxHideOnStart.Checked() = Form1.O_HideOnStart
 
         ' Sorting method booleans
         FormOptions.rbn_srt_Len.Checked = Form1.O_S_Length
@@ -60,7 +61,7 @@ Public Class Settings
         Form1.MinAccuracy = 0
         Form1.IdeaCountLimit = 0
 
-        ' Boolean transmits
+        ' Booleans
         Form1.O_Reverse = False
         Form1.O_IgnoreCase = True
         Form1.O_TypeSpace = False
@@ -70,6 +71,7 @@ Public Class Settings
         Form1.O_NumSelection = False
         Form1.O_UseNumberpad = True
         Form1.O_UseCopyPaste = False
+        Form1.O_HideOnStart = False ' Make sure unaware users notice the program
 
         ' Sorting method
         Form1.TrieDepth = 4
@@ -224,6 +226,13 @@ Public Class Settings
                         Continue While
                     End If
 
+                    ' Hide-on-start
+                    If SLine.StartsWith("HideOnStart") Then
+                        Form1.O_HideOnStart = Bool
+                        FormOptions.cbxHideOnStart.Checked = Bool
+                        Continue While
+                    End If
+
                     ' Main document sorting method
                     If SLine.StartsWith("MainDocTriePrd=") Then
                         Form1.O_MDSTrieSrcInterval = CInt(SValue)
@@ -315,6 +324,7 @@ Public Class Settings
         StrList.Add("NumSelection=" & BoolToInt(Form1.O_NumSelection))
         StrList.Add("UseNumpad=" & BoolToInt(Form1.O_UseNumberpad))
         StrList.Add("UseCopyPaste=" & BoolToInt(Form1.O_UseCopyPaste))
+        StrList.Add("HideOnStart=" & BoolToInt(Form1.O_HideOnStart))
 
         ' Sorting settings
         StrList.Add("TrieDepth=" & CStr(Form1.TrieDepth))
